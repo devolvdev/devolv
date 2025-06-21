@@ -15,4 +15,9 @@ __pycache__/
 .DS_Store
 Thumbs.db
 
+# Build
 dist/
+*.egg-info/
+
+# Testing
+.pytest_cache/
