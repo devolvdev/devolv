@@ -4,31 +4,22 @@
 [![Tests](https://github.com/devolvdev/devolv/actions/workflows/test.yml/badge.svg)](https://github.com/devolvdev/devolv/actions)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
-**Devolv** is a modular DevOps toolkit built for secure-by-default cloud infrastructure.  
-Install once — and unlock a growing set of powerful CLI tools designed to improve cloud security, automation, and IAM hygiene.
+**Devolv** is a modular DevOps CLI toolkit focused on AWS IAM security and cloud automation.
+
+🔧 Install once — and unlock multiple tools to validate, transform, and secure your infrastructure.
+
+📖 **Docs:** [devolvdev.github.io/devolv](https://devolvdev.github.io/devolv)
 
 ---
 
 ## 🧰 Available Tools
 
-| Command                | Description                                  |
-|------------------------|----------------------------------------------|
-| `devolv validate file` | Validate AWS IAM policies statically         |
-
-
-> All tools are accessible through the single CLI entrypoint: `devolv`
-
----
-
-## 🔐 IAM Validator (Live Now)
-
-`devolv validate file` statically analyzes AWS IAM policies for:
-
-- 🚩 Wildcards in `Action` and `Resource`
-- 🔐 `iam:PassRole` without restriction
-- ⚠️ Common privilege escalation patterns
-
-Supports both `.json` and `.yaml` input formats.
+| Command                | Description                                |
+|------------------------|--------------------------------------------|
+| `devolv validate file` | Validate AWS IAM policies (✅ live)        |
+| `devolv scan`          | 🔜 Scan AWS accounts (coming soon)         |
+| `devolv generate`      | 🧠 Generate safe IAM policies (coming soon)|
+| `devolv etl`           | ⚙️ CI/CD IAM transformation (planned)      |
 
 ---
 
@@ -38,36 +29,13 @@ Supports both `.json` and `.yaml` input formats.
 pip install devolv
 ```
 
----
-
-## 🛠 Usage
+## 🛠 Example
 
 ```bash
 devolv validate file path/to/policy.json
 ```
 
-Example output:
-
-```
-❌ HIGH: Policy uses wildcard in Action, which is overly permissive.
-```
-
----
-
-## 📁 Example Policy
-
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": "*",
-      "Resource": "*"
-    }
-  ]
-}
-```
+> Outputs security warnings if wildcards or risks are found.
 
 ---
 
@@ -79,15 +47,8 @@ pytest
 
 ---
 
-## 👀 Follow the Journey
+## 🧰 Full Documentation
 
-Devolv is built in public — one CLI tool at a time.  
-More tools, community features, and integrations are coming soon.
+📖 Visit: [https://devolvdev.github.io/devolv](https://devolvdev.github.io/devolv)
 
-- 🐍 PyPI: [devolv](https://pypi.org/project/devolv)
-- 🔗 GitHub: [github.com/devolvdev](https://github.com/devolvdev)
-- 🐦 Twitter/X: [@Devolv__](https://x.com/Devolv__)
-
----
-
-> Built for cloud engineers. Backed by open-source. Shipped with love.
+Built with love by the [Devolv](https://github.com/devolvdev) OSS team.
