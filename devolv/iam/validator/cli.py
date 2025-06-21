@@ -1,30 +1,26 @@
 import typer
+import os
 from devolv.iam.validator.core import validate_policy_file
 
-file_app = typer.Typer(help="Commands to validate IAM policy files.")
+app = typer.Typer(help="IAM Policy Validator CLI")
 
-@file_app.command("file")
+@app.command("file")
 def validate_file(path: str):
     """
     Validate an AWS IAM policy file (JSON or YAML).
     """
-    try:
-        findings = validate_policy_file(path)
-    except FileNotFoundError:
+    if not os.path.exists(path):
         typer.secho(f"❌ File not found: {path}", fg=typer.colors.RED)
         raise typer.Exit(code=1)
-    except ValueError as e:
-        typer.secho(f"❌ Error: {e}", fg=typer.colors.RED)
-        raise typer.Exit(code=1)
+
+    try:
+        findings = validate_policy_file(path)
+        if not findings:
+            typer.secho("✅ Policy is valid and passed all checks.", fg=typer.colors.GREEN)
+        else:
+            for finding in findings:
+                typer.secho(f"❌ {finding['level'].upper()}: {finding['message']}", fg=typer.colors.RED)
+            raise typer.Exit(code=1)
     except Exception as e:
-        typer.secho(f"❌ Unexpected error: {e}", fg=typer.colors.RED)
+        typer.secho(f"❌ Error: {str(e)}", fg=typer.colors.RED)
         raise typer.Exit(code=1)
-
-    if not findings:
-        typer.secho("✅ Policy is valid and passed all checks.", fg=typer.colors.GREEN)
-    else:
-        typer.secho("⚠️ Issues found in the policy:", fg=typer.colors.YELLOW)
-        for finding in findings:
-            typer.secho(f" - {finding['level'].upper()}: {finding['message']}", fg=typer.colors.RED)
-        raise typer.Exit(code=2)
-

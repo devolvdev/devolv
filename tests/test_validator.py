@@ -40,3 +40,11 @@ def test_empty_file_raises_error():
         assert "empty" in str(e).lower()
     finally:
         os.remove(temp_path)
+
+def test_missing_file_handled():
+    missing_path = "non_existent_policy.json"
+    try:
+        validate_policy_file(missing_path)
+        assert False, "Expected FileNotFoundError"
+    except FileNotFoundError:
+        pass
