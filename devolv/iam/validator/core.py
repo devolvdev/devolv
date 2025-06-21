@@ -5,9 +5,14 @@ from devolv.iam.validator.rules import RULES
 
 def load_policy(path: str):
     with open(path, "r") as f:
+        content = f.read()
+        if not content.strip():
+            raise ValueError("Policy file is empty.")
+        f.seek(0)  # reset file pointer
         if path.endswith((".yaml", ".yml")):
             return yaml.safe_load(f)
         return json.load(f)
+
 
 def validate_policy_file(path: str):
     data = load_policy(path)

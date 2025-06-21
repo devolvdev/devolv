@@ -28,3 +28,15 @@ def test_safe_policy_passes():
     findings = validate_policy_file(temp_path)
     assert not findings
     os.remove(temp_path)
+
+def test_empty_file_raises_error():
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+        temp_path = f.name
+
+    try:
+        validate_policy_file(temp_path)
+        assert False, "Expected ValueError for empty file"
+    except ValueError as e:
+        assert "empty" in str(e).lower()
+    finally:
+        os.remove(temp_path)
