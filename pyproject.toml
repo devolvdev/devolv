@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "devolv"
+version = "0.1.0"
+description = "Modular DevOps Toolkit with IAM policy validation"
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+authors = [{ name = "Devolv OSS", email = "contact@devolv.dev" }]
+dependencies = ["typer>=0.9", "PyYAML"]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[project.scripts]
+devolv = "devolv.cli:app"
