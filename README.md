@@ -51,4 +51,4 @@ pytest
 
 📖 Visit: [https://devolvdev.github.io/devolv](https://devolvdev.github.io/devolv)
 
-Built with love by the [Devolv](https://github.com/devolvdev) OSS team.
+Built with love by the [Devolv Dev](https://github.com/devolvdev) team.
