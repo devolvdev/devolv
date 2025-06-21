@@ -17,3 +17,17 @@ classifiers = [
   "Topic :: Software Development :: Libraries",
   "Topic :: Utilities"
 ]
+
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[project.scripts]
+devolv = "devolv.cli:app"
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
