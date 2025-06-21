@@ -9,8 +9,6 @@ authors = [
   { name = "Devolv Dev", email = "devolv.dev@gmail.com" }
 ]
 
-homepage = "https://github.com/devolvdev/devolv"
-repository = "https://github.com/devolvdev/devolv"
 keywords = ["devops", "aws", "iam", "security", "cli", "toolkit"]
 classifiers = [
   "License :: OSI Approved :: MIT License",
