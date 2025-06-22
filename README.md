@@ -3,6 +3,7 @@
 [![PyPI - Version](https://img.shields.io/pypi/v/devolv)](https://pypi.org/project/devolv/)
 [![Tests](https://github.com/devolvdev/devolv/actions/workflows/test.yml/badge.svg)](https://github.com/devolvdev/devolv/actions)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+![CI](https://github.com/YOUR_USERNAME/devolv/actions/workflows/test.yml/badge.svg)
 
 **Devolv** is a modular DevOps CLI toolkit focused on AWS IAM security and cloud automation.
 

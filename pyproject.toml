@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "devolv"
-version = "0.1.4"
+version = "0.1.6"
 description = "Modular DevOps Toolkit with IAM policy validation"
 readme = "README.md"
 requires-python = ">=3.8"

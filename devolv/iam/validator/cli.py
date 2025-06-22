@@ -1,7 +1,7 @@
 import typer
 import os
 from devolv.iam.validator.core import validate_policy_file
-
+from devolv.iam.validator.folder import validate_policy_folder
 app = typer.Typer(help="IAM Policy Validator CLI")
 
 @app.command("file")
@@ -24,3 +24,13 @@ def validate_file(path: str):
     except Exception as e:
         typer.secho(f"❌ Error: {str(e)}", fg=typer.colors.RED)
         raise typer.Exit(code=1)
+
+
+@app.command("folder")
+def validate_folder(path: str):
+    """
+    Recursively validate all IAM policy files in a folder.
+    """
+    exit_code = validate_policy_folder(path)
+    raise typer.Exit(code=exit_code)
+

@@ -48,3 +48,92 @@ def test_missing_file_handled():
         assert False, "Expected FileNotFoundError"
     except FileNotFoundError:
         pass
+
+def test_passrole_with_wildcard_resource():
+    policy = {
+        "Version": "2012-10-17",
+        "Statement": [{
+            "Effect": "Allow",
+            "Action": "iam:PassRole",
+            "Resource": "*"
+        }]
+    }
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+        json.dump(policy, f)
+        temp_path = f.name
+
+    findings = validate_policy_file(temp_path)
+    assert any("passrole" in f["message"].lower() for f in findings)
+    os.remove(temp_path)
+
+
+def test_rule_wildcard_action_star():
+    # Should trigger IAM001
+    policy = {
+        "Version": "2012-10-17",
+        "Statement": [{
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "arn:aws:s3:::example"
+        }]
+    }
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+        json.dump(policy, f)
+        temp_path = f.name
+
+    findings = validate_policy_file(temp_path)
+    assert any("wildcard" in f["message"].lower() and "action" in f["message"].lower() for f in findings)
+    os.remove(temp_path)
+
+def test_rule_wildcard_action_suffix():
+    # Should also trigger IAM001
+    policy = {
+        "Version": "2012-10-17",
+        "Statement": [{
+            "Effect": "Allow",
+            "Action": "s3:*",
+            "Resource": "arn:aws:s3:::example"
+        }]
+    }
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+        json.dump(policy, f)
+        temp_path = f.name
+
+    findings = validate_policy_file(temp_path)
+    assert any("wildcard" in f["message"].lower() for f in findings)
+    os.remove(temp_path)
+
+def test_rule_passrole_with_wildcard_resource():
+    # Should trigger IAM002
+    policy = {
+        "Version": "2012-10-17",
+        "Statement": [{
+            "Effect": "Allow",
+            "Action": "iam:PassRole",
+            "Resource": "*"
+        }]
+    }
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+        json.dump(policy, f)
+        temp_path = f.name
+
+    findings = validate_policy_file(temp_path)
+    assert any("passrole" in f["message"].lower() for f in findings)
+    os.remove(temp_path)
+
+def test_statement_as_dict_not_list():
+    policy = {
+        "Version": "2012-10-17",
+        "Statement": {
+            "Effect": "Allow",
+            "Action": "*",
+            "Resource": "arn:aws:s3:::x"
+        }
+    }
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+        json.dump(policy, f)
+        temp_path = f.name
+
+    findings = validate_policy_file(temp_path)
+    assert any("wildcard" in f["message"].lower() for f in findings)
+    os.remove(temp_path)
