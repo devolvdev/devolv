@@ -1,20 +1,20 @@
-# `devolv validate file`
+# `devolv validate`
 
-This is the first released module of Devolv.
+This is the **first released module** of **Devolv** — the Modular DevOps CLI Toolkit.
 
 ---
 
 ## 🛡 Purpose
 
-Statically validate AWS IAM policy files for:
+Statically validate AWS IAM policy files to detect:
 
-- ✅ Wildcards in Action or Resource
-- 🔐 `iam:PassRole` misuse
-- 🚨 Common escalation risks
+- ✅ Wildcards in Action (`*`, `s3:*`)  
+- 🔐 `iam:PassRole` with wildcard resources  
+- 🚨 Common privilege escalation risks
 
 ---
 
-## 📂 Supported Input
+## 📂 Supported Input Formats
 
 - `.json`
 - `.yaml` / `.yml`
@@ -23,13 +23,25 @@ Statically validate AWS IAM policy files for:
 
 ## 🔧 Usage
 
+### 🔹 Validate a Single File
+
 ```bash
 devolv validate file path/to/policy.json
 ```
 
+### 🔹 Validate a Folder
+
+```bash
+devolv validate folder path/to/folder/
+```
+
+> Scans all `.json`, `.yaml`, and `.yml` files in the folder recursively.
+
 ---
 
 ## 📋 Example
+
+### Input File: `policy.json`
 
 ```json
 {
@@ -44,17 +56,19 @@ devolv validate file path/to/policy.json
 }
 ```
 
-Output:
+### Output
 
 ```
 ❌ HIGH: Policy uses wildcard in Action, which is overly permissive.
+❌ HIGH: iam:PassRole with wildcard resource can lead to privilege escalation.
 ```
 
 ---
 
 ## ✅ Exit Codes
 
-- `0`: All checks passed
-- `1`: Risk found in policy
-- `2`: File or format error
-
+| Code | Meaning                     |
+|------|-----------------------------|
+| `0`  | All checks passed           |
+| `1`  | Risk found in policy        |
+| `2`  | File/folder not found or invalid format |

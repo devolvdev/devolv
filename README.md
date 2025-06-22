@@ -17,7 +17,7 @@
 
 | Command                | Description                                |
 |------------------------|--------------------------------------------|
-| `devolv validate file` | Validate AWS IAM policies (✅ live)        |
+| `devolv validate`      | Validate AWS IAM policies (✅ live)        |
 | `devolv scan`          | 🔜 Scan AWS accounts (coming soon)         |
 | `devolv generate`      | 🧠 Generate safe IAM policies (coming soon)|
 | `devolv etl`           | ⚙️ CI/CD IAM transformation (planned)      |

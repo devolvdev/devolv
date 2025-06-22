@@ -6,9 +6,9 @@
 
 ## 🚀 Why Devolv?
 
-- Prevent security risks in IAM policies
-- Automate least-privilege generation
-- Enable continuous IAM validation in CI/CD
+- Prevent security risks in IAM policies  
+- Automate least-privilege generation  
+- Enable continuous IAM validation in CI/CD  
 - All via one CLI interface: `devolv`
 
 ---
@@ -23,12 +23,13 @@ pip install devolv
 
 ## 🔍 What Can It Do?
 
-| Command                | Description                                  |
-|------------------------|----------------------------------------------|
-| `devolv validate file` | Validate AWS IAM JSON/YAML files             |
-| `devolv scan`          | 🔜 Scan AWS accounts and misconfigurations   |
-| `devolv generate`      | 🧠 AI/Rule-based IAM policy generation        |
-| `devolv etl`           | 🔄 Transform/clean policies in pipelines     |
+| Command                  | Status   | Description                                        |
+|--------------------------|----------|----------------------------------------------------|
+| `devolv validate file`   | ✅ Ready | Validate a single AWS IAM JSON/YAML policy file    |
+| `devolv validate folder` | ✅ Ready | Validate all policies inside a folder              |
+| `devolv scan`            | 🔜 WIP   | Scan AWS accounts for live misconfigurations       |
+| `devolv generate`        | 🔜 WIP   | AI/Rule-based IAM policy generation                |
+| `devolv etl`             | 🔜 WIP   | Transform/clean policies for IAM pipelines         |
 
 ---
 
@@ -37,4 +38,3 @@ pip install devolv
 - [Validator CLI](./validator.md)
 - [Roadmap](./roadmap.md)
 - [GitHub Repo](https://github.com/devolvdev/devolv)
-
