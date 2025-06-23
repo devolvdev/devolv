@@ -4,16 +4,19 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "devolv"
-version = "0.1.6"
 description = "Modular DevOps Toolkit with IAM policy validation"
 readme = "README.md"
 requires-python = ">=3.8"
-license = { text = "MIT" }
+license = "MIT"
 authors = [{ name = "Devolv Dev", email = "devolv.dev@gmail.com" }]
 dependencies = ["typer>=0.9", "PyYAML"]
+dynamic = ["version"]  # ✔️ Only declare version here
 
 [project.optional-dependencies]
 dev = ["pytest"]
 
 [project.scripts]
 devolv = "devolv.cli:app"
+
+[tool.setuptools.dynamic]
+version = { attr = "devolv.__version__" }

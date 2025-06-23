@@ -20,9 +20,12 @@ def validate_policy_file(path: str):
     for rule in RULES:
         result = rule["check"](data)
         if result:
-            findings.append({
+            finding = {
                 "id": rule["id"],
                 "level": rule["level"],
                 "message": result
-            })
+            }
+            findings.append(finding)
     return findings
+
+

@@ -26,13 +26,13 @@ Statically validate AWS IAM policy files to detect:
 ### 🔹 Validate a Single File
 
 ```bash
-devolv validate file path/to/policy.json
+devolv validate path/to/policy.json
 ```
 
 ### 🔹 Validate a Folder
 
 ```bash
-devolv validate folder path/to/folder/
+devolv validate path/to/folder/
 ```
 
 > Scans all `.json`, `.yaml`, and `.yml` files in the folder recursively.

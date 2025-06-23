@@ -25,8 +25,7 @@ pip install devolv
 
 | Command                  | Status   | Description                                        |
 |--------------------------|----------|----------------------------------------------------|
-| `devolv validate file`   | ✅ Ready | Validate a single AWS IAM JSON/YAML policy file    |
-| `devolv validate folder` | ✅ Ready | Validate all policies inside a folder              |
+| `devolv validate file`   | ✅ Ready | Validate a AWS IAM JSON/YAML policy file/fodler    |
 | `devolv scan`            | 🔜 WIP   | Scan AWS accounts for live misconfigurations       |
 | `devolv generate`        | 🔜 WIP   | AI/Rule-based IAM policy generation                |
 | `devolv etl`             | 🔜 WIP   | Transform/clean policies for IAM pipelines         |

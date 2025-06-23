@@ -1,36 +1,38 @@
 import typer
 import os
+from typer import Exit
 from devolv.iam.validator.core import validate_policy_file
 from devolv.iam.validator.folder import validate_policy_folder
-app = typer.Typer(help="IAM Policy Validator CLI")
 
-@app.command("file")
-def validate_file(path: str):
-    """
-    Validate an AWS IAM policy file (JSON or YAML).
-    """
+def validate(
+    path: str,
+    json_output: bool = typer.Option(False, "--json", help="Output findings in JSON format"),
+    quiet: bool = typer.Option(False, "--quiet", help="Suppress debug logs"),
+):
     if not os.path.exists(path):
-        typer.secho(f"❌ File not found: {path}", fg=typer.colors.RED)
-        raise typer.Exit(code=1)
+        typer.secho(f"❌ Path not found: {path}", fg=typer.colors.RED)
+        raise Exit(code=1)
 
-    try:
+    if os.path.isfile(path):
         findings = validate_policy_file(path)
         if not findings:
             typer.secho("✅ Policy is valid and passed all checks.", fg=typer.colors.GREEN)
-        else:
-            for finding in findings:
-                typer.secho(f"❌ {finding['level'].upper()}: {finding['message']}", fg=typer.colors.RED)
-            raise typer.Exit(code=1)
-    except Exception as e:
-        typer.secho(f"❌ Error: {str(e)}", fg=typer.colors.RED)
-        raise typer.Exit(code=1)
+            raise Exit(code=0)
+        for finding in findings:
+            typer.secho(f"❌ {finding['level'].upper()}: {finding['message']}", fg=typer.colors.RED)
+        raise Exit(code=1)
 
+    elif os.path.isdir(path):
+        findings = validate_policy_folder(path)
+        if not findings:
+            typer.secho("✅ All policies passed validation.", fg=typer.colors.GREEN)
+            raise Exit(code=0)
+        for finding in findings:
+            typer.secho(f"❌ {finding['level'].upper()}: {finding['message']}", fg=typer.colors.RED)
+        if any(f["level"] == "error" for f in findings):
+            raise Exit(code=1)
+        raise Exit(code=0)
 
-@app.command("folder")
-def validate_folder(path: str):
-    """
-    Recursively validate all IAM policy files in a folder.
-    """
-    exit_code = validate_policy_folder(path)
-    raise typer.Exit(code=exit_code)
-
+    else:
+        typer.secho(f"❌ Unsupported path type: {path}", fg=typer.colors.RED)
+        raise Exit(code=1)

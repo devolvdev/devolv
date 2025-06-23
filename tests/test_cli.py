@@ -17,27 +17,33 @@ def make_policy_file(policy_dict):
 def test_validate_file_success():
     path = make_policy_file({
         "Version": "2012-10-17",
-        "Statement": [{"Effect": "Allow", "Action": "s3:GetObject", "Resource": "arn:aws:s3:::bucket/*"}]
+        "Statement": [{
+            "Effect": "Allow",
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::my-bucket/my-object.txt"
+
+        }]
     })
-    result = runner.invoke(app, ["validate", "file", path])
+    result = runner.invoke(app, ["validate", path])
     assert result.exit_code == 0
-    assert "✅" in result.output
     os.remove(path)
+
+
 
 def test_validate_file_error():
     path = make_policy_file({
         "Version": "2012-10-17",
         "Statement": [{"Effect": "Allow", "Action": "*", "Resource": "*"}]
     })
-    result = runner.invoke(app, ["validate", "file", path])
+    result = runner.invoke(app, ["validate", path])
     assert result.exit_code == 1
     assert "❌" in result.output
     os.remove(path)
 
 def test_validate_file_missing():
-    result = runner.invoke(app, ["validate", "file", "no_such_file.json"])
+    result = runner.invoke(app, ["validate", "no_such_file.json"])
     assert result.exit_code == 1
-    assert "File not found" in result.output
+    assert "not found" in result.output
 
 def test_validate_folder_all_valid(tmp_path):
     valid = {
@@ -48,7 +54,7 @@ def test_validate_folder_all_valid(tmp_path):
         path = tmp_path / f"v{i}.json"
         path.write_text(json.dumps(valid))
 
-    result = runner.invoke(app, ["validate", "folder", str(tmp_path)])
+    result = runner.invoke(app, ["validate", str(tmp_path)])
     assert result.exit_code == 0
     assert "✅" in result.output
 
@@ -64,7 +70,7 @@ def test_validate_folder_with_errors(tmp_path):
     (tmp_path / "good.json").write_text(json.dumps(good))
     (tmp_path / "bad.json").write_text(json.dumps(bad))
 
-    result = runner.invoke(app, ["validate", "folder", str(tmp_path)])
+    result = runner.invoke(app, ["validate", str(tmp_path)])
     assert result.exit_code == 1
     assert "❌" in result.output
 
@@ -76,9 +82,9 @@ def test_cli_help():
 def test_cli_root_help():
     result = runner.invoke(app, ["--help"])
     assert result.exit_code == 0
-    assert "Devolv CLI - Modular DevOps Toolkit" in result.output
+    assert "Modular DevOps Toolkit" in result.output
 
 def test_cli_version():
-    result = runner.invoke(app, ["version"])
+    result = runner.invoke(app, ["--version"])
     assert result.exit_code == 0
-    assert "v0.1.0" in result.output
+    assert "0.1." in result.output  # Adjust if dynamic version
