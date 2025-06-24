@@ -37,27 +37,32 @@ def test_validate_folder_all_valid(temp_policy_dir):
     (temp_policy_dir / "valid2.json").write_text(VALID_POLICY)
 
     result = validate_policy_folder(str(temp_policy_dir))
-    assert result == 0  # all valid, should pass
+    assert result == []  # all valid, no findings
 
 def test_validate_folder_some_invalid(temp_policy_dir):
     (temp_policy_dir / "good.json").write_text(VALID_POLICY)
     (temp_policy_dir / "bad.json").write_text(INVALID_POLICY)
 
     result = validate_policy_folder(str(temp_policy_dir))
-    assert result == 1  # one invalid
+    assert any(f["level"] == "high" for f in result)
+    assert any("wildcard" in f["message"] for f in result)
 
 def test_validate_folder_empty(temp_policy_dir):
     result = validate_policy_folder(str(temp_policy_dir))
-    assert result == 1  # no policy files
+    assert len(result) == 1
+    assert result[0]["level"] == "warning"
+    assert "No policy files found" in result[0]["message"]
 
 def test_validate_folder_not_exist():
     result = validate_policy_folder("non_existent_folder_123")
-    assert result == 1  # should gracefully error out
+    assert len(result) == 1
+    assert result[0]["level"] == "error"
+    assert "not found" in result[0]["message"]
 
 def test_folder_with_malformed_json(tmp_path):
     (tmp_path / "bad.json").write_text('{"Version": "2012-10-17", "Statement": [INVALID_JSON')
     result = validate_policy_folder(str(tmp_path))
-    assert result == 1  # should catch parse failure
+    assert any("failed" in f["message"] for f in result)
 
 def test_folder_with_yaml_file(tmp_path):
     good_yaml = """
@@ -69,7 +74,7 @@ Statement:
 """
     (tmp_path / "good.yaml").write_text(good_yaml)
     result = validate_policy_folder(str(tmp_path))
-    assert result == 0  # valid YAML should pass
+    assert result == []  # no findings
 
 def test_folder_with_good_and_bad_files(tmp_path):
     good = {
@@ -79,4 +84,4 @@ def test_folder_with_good_and_bad_files(tmp_path):
     (tmp_path / "good.json").write_text(json.dumps(good))
     (tmp_path / "broken.json").write_text('INVALID')
     result = validate_policy_folder(str(tmp_path))
-    assert result == 1  # one fails, so exit code should be 1
+    assert any("failed" in f["message"] for f in result)
