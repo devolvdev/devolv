@@ -29,7 +29,7 @@ def validate(
             raise Exit(code=0)
         for finding in findings:
             typer.secho(f"❌ {finding['level'].upper()}: {finding['message']}", fg=typer.colors.RED)
-        if any(f["level"] == "error" for f in findings):
+        if any(f["level"] in ("error", "high") for f in findings):
             raise Exit(code=1)
         raise Exit(code=0)
 
