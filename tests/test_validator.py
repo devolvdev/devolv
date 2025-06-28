@@ -1,5 +1,6 @@
 
 import json
+from devolv.iam.validator.core import validate_policy_file
 
 def _find_statement_line(stmt, raw_lines):
     if raw_lines is None:
@@ -299,3 +300,15 @@ def test_policy_multiple_statements_all_safe():
     assert not findings
     os.remove(temp_path)
 
+def test_validator_no_findings(tmp_path):
+    file = tmp_path / "good.json"
+    file.write_text('{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":"s3:GetObject","Resource":"arn:aws:s3:::mybucket/mykey"}]}')
+    findings = validate_policy_file(str(file))
+    assert findings == []
+
+def test_validator_edge_wildcard(tmp_path):
+    file = tmp_path / "edge.json"
+    file.write_text('{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":"s3:Get*","Resource":"*"}]}')
+    findings = validate_policy_file(str(file))
+    # Should not trigger IAM001 since s3:Get* is not s3:* or *
+    assert not any(f["id"] == "IAM001" for f in findings)

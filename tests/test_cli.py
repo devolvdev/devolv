@@ -3,6 +3,8 @@ from devolv.cli import app
 import tempfile
 import json
 import os
+import pytest
+from devolv.iam.validator.core import validate_policy_file
 
 runner = CliRunner()
 
@@ -89,3 +91,59 @@ def test_cli_version():
     assert result.exit_code == 0
     assert "0.1." in result.output  # Adjust if dynamic version
 
+def test_cli_unsupported_path(tmp_path):
+    # Just pass a bogus path string that isn't a file or directory
+    bogus_path = str(tmp_path / "definitely_not_real")
+    result = runner.invoke(app, ["validate", bogus_path])
+    assert result.exit_code == 1
+    assert "File not found" in result.output or "Unsupported path type" in result.output
+
+
+def test_cli_empty_file(tmp_path):
+    file = tmp_path / "empty.json"
+    file.write_text("")
+    with pytest.raises(ValueError):
+        validate_policy_file(str(file))
+
+def test_cli_malformed_json(tmp_path):
+    file = tmp_path / "bad.json"
+    file.write_text("{not: valid json}")
+    with pytest.raises(Exception):  # You can tighten this if you want json.JSONDecodeError
+        validate_policy_file(str(file))
+
+def test_cli_folder_all_valid(tmp_path):
+    file = tmp_path / "good.json"
+    file.write_text('{"Version":"2012-10-17","Statement":[]}')
+    result = runner.invoke(app, ["validate", str(tmp_path)])
+    assert result.exit_code == 0
+    assert "All policies passed validation" in result.output
+
+def test_cli_json_output(tmp_path):
+    file = tmp_path / "bad.json"
+    file.write_text('{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":"s3:*","Resource":"*"}]}')
+    result = runner.invoke(app, ["validate", str(file), "--json"])
+    assert result.exit_code == 1
+    assert result.output.strip().startswith("[")  # Should be JSON list
+
+def test_cli_quiet_flag(tmp_path):
+    file = tmp_path / "bad.json"
+    file.write_text('{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":"s3:*","Resource":"*"}]}')
+    result = runner.invoke(app, ["validate", str(file), "--quiet"])
+    # Should still print findings (quiet may suppress debug logs, not findings)
+    assert result.exit_code == 1
+    assert "s3:*" in result.output
+
+def test_cli_exit_code_low_severity(tmp_path):
+    # Policy that would produce only low severity finding if such exists
+    # Here we force no high/error to test exit 0
+    file = tmp_path / "low.json"
+    file.write_text('{"Version":"2012-10-17","Statement":[{"Effect":"Deny","Action":"*", "Resource":"*"}]}')
+    result = runner.invoke(app, ["validate", str(file)])
+    assert result.exit_code == 0
+
+def test_cli_json_and_quiet_combination(tmp_path):
+    file = tmp_path / "bad.json"
+    file.write_text('{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":"s3:*","Resource":"*"}]}')
+    result = runner.invoke(app, ["validate", str(file), "--json", "--quiet"])
+    assert result.exit_code == 1
+    assert result.output.strip().startswith("[")
