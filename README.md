@@ -33,7 +33,7 @@ pip install devolv
 ## 🛠 Example
 
 ```bash
-devolv validate file path/to/policy.json
+devolv validate path/to/policy.json
 ```
 
 > Outputs security warnings if wildcards or risks are found.
