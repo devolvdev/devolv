@@ -45,7 +45,8 @@ def test_validate_folder_some_invalid(temp_policy_dir):
 
     result = validate_policy_folder(str(temp_policy_dir))
     assert any(f["level"] == "high" for f in result)
-    assert any("wildcard" in f["message"] for f in result)
+    assert any("overly permissive" in str(f.get("message", "")).lower() for f in result)
+
 
 def test_validate_folder_empty(temp_policy_dir):
     result = validate_policy_folder(str(temp_policy_dir))
@@ -85,3 +86,4 @@ def test_folder_with_good_and_bad_files(tmp_path):
     (tmp_path / "broken.json").write_text('INVALID')
     result = validate_policy_folder(str(tmp_path))
     assert any("failed" in f["message"] for f in result)
+

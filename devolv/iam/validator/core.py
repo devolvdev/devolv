@@ -1,6 +1,5 @@
 import json
 import yaml
-from pathlib import Path
 from devolv.iam.validator.rules import RULES
 
 def load_policy(path: str):
@@ -8,17 +7,16 @@ def load_policy(path: str):
         content = f.read()
         if not content.strip():
             raise ValueError("Policy file is empty.")
-        f.seek(0)  # reset file pointer
+        f.seek(0)
         if path.endswith((".yaml", ".yml")):
-            return yaml.safe_load(f)
-        return json.load(f)
-
+            return yaml.safe_load(f), content.splitlines()
+        return json.load(f), content.splitlines()
 
 def validate_policy_file(path: str):
-    data = load_policy(path)
+    data, raw_lines = load_policy(path)
     findings = []
     for rule in RULES:
-        result = rule["check"](data)
+        result = rule["check"](data, raw_lines=raw_lines)
         if result:
             finding = {
                 "id": rule["id"],
@@ -27,5 +25,3 @@ def validate_policy_file(path: str):
             }
             findings.append(finding)
     return findings
-
-
