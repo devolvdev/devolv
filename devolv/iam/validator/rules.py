@@ -3,6 +3,8 @@ def check_wildcard_actions(policy):
     if not isinstance(statements, list):
         statements = [statements]
     for stmt in statements:
+        if stmt.get("Effect", "Allow") != "Allow":
+            continue  # Skip Deny statements
         actions = stmt.get("Action", [])
         if isinstance(actions, str):
             actions = [actions]
@@ -15,10 +17,14 @@ def check_passrole_wildcard(policy):
     if not isinstance(statements, list):
         statements = [statements]
     for stmt in statements:
+        if stmt.get("Effect", "Allow") != "Allow":
+            continue  # Skip Deny statements
         actions = stmt.get("Action", [])
         resources = stmt.get("Resource", [])
-        if isinstance(actions, str): actions = [actions]
-        if isinstance(resources, str): resources = [resources]
+        if isinstance(actions, str):
+            actions = [actions]
+        if isinstance(resources, str):
+            resources = [resources]
         if "iam:PassRole" in actions and "*" in resources:
             return "iam:PassRole with wildcard resource can lead to privilege escalation."
     return None
@@ -27,13 +33,13 @@ RULES = [
     {
         "id": "IAM001",
         "level": "high",
-        "description": "Wildcard in action",
+        "description": "Wildcard in Action",
         "check": check_wildcard_actions
     },
     {
         "id": "IAM002",
         "level": "high",
-        "description": "PassRole with wildcard",
+        "description": "PassRole with wildcard Resource",
         "check": check_passrole_wildcard
     }
 ]

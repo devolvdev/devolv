@@ -137,3 +137,38 @@ def test_statement_as_dict_not_list():
     findings = validate_policy_file(temp_path)
     assert any("wildcard" in f["message"].lower() for f in findings)
     os.remove(temp_path)
+
+def test_deny_wildcard_action_not_flagged():
+    policy = {
+        "Version": "2012-10-17",
+        "Statement": [{
+            "Effect": "Deny",
+            "Action": "*",
+            "Resource": "*"
+        }]
+    }
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+        json.dump(policy, f)
+        temp_path = f.name
+
+    findings = validate_policy_file(temp_path)
+    assert not findings, "Deny with wildcard should not trigger findings"
+    os.remove(temp_path)
+
+
+def test_deny_passrole_wildcard_not_flagged():
+    policy = {
+        "Version": "2012-10-17",
+        "Statement": [{
+            "Effect": "Deny",
+            "Action": "iam:PassRole",
+            "Resource": "*"
+        }]
+    }
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+        json.dump(policy, f)
+        temp_path = f.name
+
+    findings = validate_policy_file(temp_path)
+    assert not findings, "Deny PassRole with wildcard should not trigger findings"
+    os.remove(temp_path)
