@@ -16,12 +16,6 @@ def validate_policy_file(path: str):
     data, raw_lines = load_policy(path)
     findings = []
     for rule in RULES:
-        result = rule["check"](data, raw_lines=raw_lines)
-        if result:
-            finding = {
-                "id": rule["id"],
-                "level": rule["level"],
-                "message": result
-            }
-            findings.append(finding)
+        findings.extend(rule["check"](data, raw_lines=raw_lines))
     return findings
+
