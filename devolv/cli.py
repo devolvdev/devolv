@@ -1,10 +1,12 @@
 import typer
 from devolv import __version__
 from devolv.iam.validator.cli import validate
+from devolv.drift.cli import drift
 
 app = typer.Typer(help="Devolv CLI - Modular DevOps Toolkit")
 
 app.command("validate")(validate)
+app.command("drift")(drift)
 
 @app.callback()
 def main(
