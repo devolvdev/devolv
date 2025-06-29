@@ -20,30 +20,26 @@ def validate(
     findings = []
     if os.path.isfile(path):
         findings = validate_policy_file(path)
+        if not findings:
+            typer.secho("✅ Policy is valid and passed all checks.", fg=typer.colors.GREEN)
+        elif json_output:
+            typer.echo(json.dumps(findings, indent=2))
+        else:
+            for finding in findings:
+                typer.secho(
+                    f"❌ {finding.get('level', '').upper()}: {finding.get('message', '')}",
+                    fg=typer.colors.RED
+                )
     elif os.path.isdir(path):
         findings = validate_policy_folder(path)
+        if json_output:
+            typer.echo(json.dumps(findings, indent=2))
+        # No re-print of findings — already handled by folder validator
     else:
         typer.secho(f"❌ Unsupported path type: {path}", fg=typer.colors.RED)
         raise Exit(code=1)
 
-    if not findings:
-        msg = (
-            "✅ Policy is valid and passed all checks."
-            if os.path.isfile(path)
-            else "✅ All policies passed validation."
-        )
-        typer.secho(msg, fg=typer.colors.GREEN)
-        raise Exit(code=0)
-
-    if json_output:
-        typer.echo(json.dumps(findings, indent=2))
-    else:
-        for finding in findings:
-            typer.secho(
-                f"❌ {finding.get('level', '').upper()}: {finding.get('message', '')}",
-                fg=typer.colors.RED
-            )
-
+    # Determine exit code
     if any(f.get("level", "").lower() in ("error", "high") for f in findings):
         raise Exit(code=1)
     else:
