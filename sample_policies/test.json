@@ -1,0 +1,189 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowReadingCDKBootstrapVersionParameter",
+      "Effect": "Allow",
+      "Action": ["ssm:GetParameters", "ssm:GetParameter"],
+      "Resource": "arn:aws:ssm:{{ config.aws.region }}:{{ config.aws.account_id }}:parameter/cdk-bootstrap/{{ config.aws_cdk_bootstrap_qualifier }}/version"
+    },
+    {
+      "Sid": "AllowReadingFilesFromCDKBootstrapBucket",
+      "Effect": "Allow",
+      "Action": ["s3:GetObject"],
+      "Resource": "arn:aws:s3:::cdk-{{ config.aws_cdk_bootstrap_qualifier }}-assets-{{ config.aws.account_id }}-{{ config.aws.region }}/*"
+    },
+    {
+      "Sid": "AllowCDKExecToCreateRole",
+      "Effect": "Allow",
+      "Action": [
+        "iam:CreateRole",
+        "iam:PutRolePolicy",
+        "iam:AttachRolePolicy",
+        "iam:PutRolePermissionsBoundary"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "ArnLike": {
+          "aws:PrincipalArn": "arn:aws:sts::{{ config.aws.account_id }}:assumed-role/cdk-{{ config.project_slug }}-cfn-exec-role-{{ config.aws.account_id }}-us-west-2/AWSCloudFormation"
+        }
+      }
+    },
+    {
+      "Sid": "RestrictRoleCreationWithoutBoundary",
+      "Effect": "Deny",
+      "Action": [
+        "iam:CreateRole",
+        "iam:PutRolePolicy",
+        "iam:AttachRolePolicy",
+        "iam:PutRolePermissionsBoundary"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "StringNotEqualsIfExists": {
+          "iam:PermissionsBoundary": "arn:aws:iam::{{ config.aws.account_id }}:policy/{{ config.project_slug }}-cdk-bootstrap-boundary-policy"
+        }
+      }
+    },
+    {
+      "Sid": "DenyPermBoundaryIAMPolicyAlteration",
+      "Effect": "Deny",
+      "Action": [
+        "iam:CreatePolicyVersion",
+        "iam:DeletePolicy",
+        "iam:DeletePolicyVersion",
+        "iam:SetDefaultPolicyVersion"
+      ],
+      "Resource": "arn:aws:iam::{{ config.aws.account_id }}:policy/{{ config.project_slug }}-cdk-bootstrap-boundary-policy"
+    },
+    {
+      "Sid": "DenyRemovalOfPermBoundaryFromAnyUserOrRole",
+      "Effect": "Deny",
+      "Action": [
+        "iam:DeleteUserPermissionsBoundary",
+        "iam:DeleteRolePermissionsBoundary"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "AllowAnyOperationsWithApplicationIAMPolicies",
+      "Effect": "Allow",
+      "Action": ["iam:*"],
+      "Resource": "arn:aws:iam::{{ config.aws.account_id }}:policy/{{ config.project_slug }}-*"
+    },
+    {
+      "Sid": "AllowAnyOperationsWithApplicationIAMRoles",
+      "Effect": "Allow",
+      "Action": ["iam:*"],
+      "Resource": "arn:aws:iam::{{ config.aws.account_id }}:role/{{ config.project_slug }}-*"
+    },
+    {
+      "Sid": "AllowAnyOperationsWithApplicationSecrets",
+      "Effect": "Allow",
+      "Action": ["secretsmanager:*"],
+      "Resource": "arn:aws:secretsmanager:{{ config.aws.region }}:{{ config.aws.account_id }}:secret:{{ config.project_slug }}-*"
+    },
+    {
+      "Sid": "AllowGenerationOfRandomPassword",
+      "Effect": "Allow",
+      "Action": ["secretsmanager:GetRandomPassword"],
+      "Resource": "*"
+    },
+    {
+      "Sid": "AllowAnyOperationsWithApplicationS3Buckets",
+      "Effect": "Allow",
+      "Action": ["s3:*"],
+      "Resource": "arn:aws:s3:::{{ config.project_slug }}-*"
+    },
+    {
+      "Sid": "AllowAnyOperationsWithApplicationSQSQueues",
+      "Effect": "Allow",
+      "Action": ["sqs:*"],
+      "Resource": "arn:aws:sqs:{{ config.aws.region }}:{{ config.aws.account_id }}:{{ config.project_slug }}-*"
+    },
+    {
+      "Sid": "AllowAnyOperationsWithApplicationLambdaFunctions",
+      "Effect": "Allow",
+      "Action": ["lambda:*"],
+      "Resource": "arn:aws:lambda:{{ config.aws.region }}:{{ config.aws.account_id }}:function:{{ config.project_slug }}-*"
+    },
+    {
+      "Sid": "AllowAnyOperationsWithApplicationLambdaLayers",
+      "Effect": "Allow",
+      "Action": ["lambda:*"],
+      "Resource": "arn:aws:lambda:{{ config.aws.region }}:{{ config.aws.account_id }}:layer:{{ config.project_slug }}-*"
+    },
+    {
+      "Sid": "AllowAnyOperationsWithApplicationLambdaFunctionEventSourceMappings",
+      "Effect": "Allow",
+      "Action": ["lambda:*EventSourceMapping"],
+      "Resource": "*",
+      "Condition": {
+        "StringLike": {
+          "lambda:FunctionArn": "arn:aws:lambda:{{ config.aws.region }}:{{ config.aws.account_id }}:function:{{ config.project_slug }}-*"
+        }
+      }
+    },
+    {
+      "Sid": "AllowAnyOperationsWithApplicationCloudWatchLogs",
+      "Effect": "Allow",
+      "Action": ["logs:*"],
+      "Resource": "arn:aws:logs:{{ config.aws.region }}:{{ config.aws.account_id }}:log-group:/aws/lambda/{{ config.project_slug }}-*"
+    },
+    {
+      "Sid": "AllowDescribingLogGroups",
+      "Effect": "Allow",
+      "Action": ["logs:DescribeLogGroups"],
+      "Resource": "*"
+    },
+    {
+      "Sid": "AllowAnyOperationsWithApplicationEventRules",
+      "Effect": "Allow",
+      "Action": ["events:*"],
+      "Resource": "arn:aws:events:{{ config.aws.region }}:{{ config.aws.account_id }}:rule/{{ config.project_slug }}-*"
+    },
+    {
+      "Sid": "AllowWritingToCloudWatchMetrics",
+      "Effect": "Allow",
+      "Action": ["cloudwatch:PutMetricData"],
+      "Resource": "*",
+      "Condition": {
+        "StringLike": {
+          "cloudwatch:namespace": "{{ config.project_slug }}"
+        }
+      }
+    },
+    {
+      "Sid": "AllowAnyOperationsWithApplicationCloudWatchDashboards",
+      "Effect": "Allow",
+      "Action": ["cloudwatch:*"],
+      "Resource": "arn:aws:cloudwatch::{{ config.aws.account_id }}:dashboard/{{ config.project_slug }}-*"
+    },
+    {
+      "Sid": "AllowCreatingApplicationMetricAlarms",
+      "Effect": "Allow",
+      "Action": ["cloudwatch:*"],
+      "Resource": "arn:aws:cloudwatch:{{ config.aws.region }}:{{ config.aws.account_id }}:alarm:{{ config.project_slug }}-*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "xray:PutTraceSegments",
+        "xray:PutTelemetryRecords",
+        "xray:GetSamplingRules",
+        "xray:GetSamplingTargets"
+      ],
+      "Resource": ["*"]
+    },
+    {
+      "Effect": "Allow",
+      "Action": ["states:*"],
+      "Resource": "arn:aws:states:{{ config.aws.region }}:{{ config.aws.account_id }}:stateMachine:{{ config.project_slug }}-*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": ["dynamodb:*"],
+      "Resource": "arn:aws:dynamodb:{{ config.aws.region }}:{{ config.aws.account_id }}:table/{{ config.project_slug }}-*"
+    }
+  ]
+}

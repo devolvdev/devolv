@@ -18,8 +18,11 @@ def validate_policy_folder(folder_path: str) -> list:
         try:
             findings = validate_policy_file(str(file))
             if not findings:
-                print("✅ Policy is valid.")
+                print("✅ No high-risk findings — policy is safe.")
             else:
+                print("❌ High-risk findings detected:")
+                for f in findings:
+                    print(f"  - {f['level'].upper()}: {f['message']}")
                 all_findings.extend(findings)
         except Exception as e:
             all_findings.append({"level": "error", "message": f"{file.name} failed: {str(e)}"})
