@@ -116,7 +116,8 @@ def test_cli_folder_all_valid(tmp_path):
     file.write_text('{"Version":"2012-10-17","Statement":[]}')
     result = runner.invoke(app, ["validate", str(tmp_path)])
     assert result.exit_code == 0
-    assert "All policies passed validation" in result.output
+    assert "No high-risk findings" in result.output
+
 
 def test_cli_json_output(tmp_path):
     file = tmp_path / "bad.json"
