@@ -10,7 +10,7 @@ requires-python = ">=3.8"
 license = "MIT"
 authors = [{ name = "Devolv Dev", email = "devolv.dev@gmail.com" }]
 dependencies = ["typer>=0.9", "PyYAML"]
-dynamic = ["version"]  # ✔️ Only declare version here
+dynamic = ["version"] 
 
 [project.optional-dependencies]
 dev = ["pytest"]
@@ -20,3 +20,6 @@ devolv = "devolv.cli:app"
 
 [tool.setuptools.dynamic]
 version = { attr = "devolv.__version__" }
+
+[tool.setuptools.packages.find]
+include = ["devolv*"]
