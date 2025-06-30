@@ -1,3 +1,4 @@
+
 # Welcome to Devolv 👋
 
 **Devolv** is a growing CLI toolkit designed for cloud engineers who want secure-by-default infrastructure.
@@ -25,7 +26,8 @@ pip install devolv
 
 | Command                  | Status   | Description                                        |
 |--------------------------|----------|----------------------------------------------------|
-| `devolv validate file`   | ✅ Ready | Validate a AWS IAM JSON/YAML policy file/fodler    |
+| `devolv validate file`   | ✅ Ready | Validate a AWS IAM JSON/YAML policy file/folder    |
+| `devolv drift`           | ✅ Ready | Detect IAM policy drift between code and AWS       |
 | `devolv scan`            | 🔜 WIP   | Scan AWS accounts for live misconfigurations       |
 | `devolv generate`        | 🔜 WIP   | AI/Rule-based IAM policy generation                |
 | `devolv etl`             | 🔜 WIP   | Transform/clean policies for IAM pipelines         |

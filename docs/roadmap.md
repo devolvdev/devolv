@@ -1,3 +1,4 @@
+
 # 📍 Devolv Roadmap
 
 Devolv is a modular DevOps CLI being released in public, one tool at a time.
@@ -8,6 +9,7 @@ Devolv is a modular DevOps CLI being released in public, one tool at a time.
 
 - `devolv validate file` → Validate a single IAM JSON/YAML file
 - `devolv validate folder` → Recursively validate IAM files in a directory
+- `devolv drift` → Detect IAM policy drift between local files and AWS
 
 ---
 

@@ -1,3 +1,4 @@
+
 # `devolv validate`
 
 This is the **first released module** of **Devolv** — the Modular DevOps CLI Toolkit.
@@ -39,36 +40,24 @@ devolv validate path/to/folder/
 
 ---
 
-## 📋 Example
+## 📋 Example Output
 
-### Input File: `policy.json`
+```bash
+🔹 Validating: path/to/policy.json
+❌ High-risk findings detected:
+  - HIGH: Policy uses overly permissive action 's3:*' with resource ['arn:aws:s3:::example-bucket/*']. Statement starts at line 6.
+  - HIGH: iam:PassRole with wildcard Resource ('*') can lead to privilege escalation. Statement starts at line 11.
 
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": "*",
-      "Resource": "*"
-    }
-  ]
-}
-```
-
-### Output
-
-```
-❌ HIGH: Policy uses wildcard in Action, which is overly permissive.
-❌ HIGH: iam:PassRole with wildcard resource can lead to privilege escalation.
+🔹 Validating: path/to/another-policy.json
+✅ No high-risk findings — policy is safe.
 ```
 
 ---
 
 ## ✅ Exit Codes
 
-| Code | Meaning                     |
-|------|-----------------------------|
-| `0`  | All checks passed           |
-| `1`  | Risk found in policy        |
-| `2`  | File/folder not found or invalid format |
+| Code | Meaning                                   |
+|------|-------------------------------------------|
+| `0`  | All checks passed (no issues found)       |
+| `1`  | Risk(s) found in policy                   |
+| `2`  | File/folder not found or invalid format   |

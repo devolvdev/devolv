@@ -9,11 +9,20 @@ readme = "README.md"
 requires-python = ">=3.8"
 license = "MIT"
 authors = [{ name = "Devolv Dev", email = "devolv.dev@gmail.com" }]
-dependencies = ["typer>=0.9", "PyYAML",  "deepdiff>=6.0.0"]
-dynamic = ["version"] 
+dependencies = [
+    "typer>=0.9",
+    "PyYAML",
+    "deepdiff>=6.0.0"
+]
+dynamic = ["version"]
 
 [project.optional-dependencies]
-dev = ["pytest"]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "coverage-badge",
+    "rich"
+]
 
 [project.scripts]
 devolv = "devolv.cli:app"
