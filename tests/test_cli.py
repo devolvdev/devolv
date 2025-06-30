@@ -5,6 +5,7 @@ import json
 import os
 import pytest
 from devolv.iam.validator.core import validate_policy_file
+from devolv import __version__
 
 runner = CliRunner()
 
@@ -89,7 +90,7 @@ def test_cli_root_help():
 def test_cli_version():
     result = runner.invoke(app, ["--version"])
     assert result.exit_code == 0
-    assert "0.1." in result.output  # Adjust if dynamic version
+    assert __version__ in result.output # Adjust if dynamic version
 
 def test_cli_unsupported_path(tmp_path):
     # Just pass a bogus path string that isn't a file or directory
