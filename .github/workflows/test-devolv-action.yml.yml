@@ -20,7 +20,7 @@ jobs:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ap-south-1
-        role-to-assume: arn:aws:iam::149704127940:policy/Devolvuserpolicy
+        role-to-assume: arn:aws:iam::149704127940:role/DevolvCIRole
 
     - name: Use Devolv Action - validate
       uses: devolvdev/devolv-actions@v1
