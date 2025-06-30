@@ -7,8 +7,24 @@ on:
     branches: [ main ]
 
 jobs:
-  test-devolv-action:
+  validate-devolv:
+    name: Devolv - Validate IAM Policies
     runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout test repo
+        uses: actions/checkout@v3
+
+      - name: Run Devolv Validate
+        uses: devolvdev/devolv-actions@v1
+        with:
+          tool: validate
+          path: ./sample_policies
+
+  drift-devolv:
+    name: Devolv - Detect IAM Policy Drift
+    runs-on: ubuntu-latest
+    needs: validate-devolv
 
     steps:
       - name: Checkout test repo
@@ -23,27 +39,9 @@ jobs:
           role-to-assume: arn:aws:iam::149704127940:role/DevolvCIRole
           role-skip-session-tagging: true
 
-      - name: Debug AWS identity after AssumeRole
-        run: aws sts get-caller-identity
-
-      - name: Use Devolv Action - validate
-        uses: devolvdev/devolv-actions@v1
-        with:
-          tool: validate
-          path: ./sample_policies
-
-      - name: Use Devolv Action - drift
+      - name: Run Devolv Drift Detection
         uses: devolvdev/devolv-actions@v1
         with:
           tool: drift
           policy-name: DevolvTestPolicyHuge
           path: ./test-devolv-policy.json
-
-      - name: Upload Devolv findings
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: devolv-findings
-          path: findings.json
-          if-no-files-found: ignore
- 
