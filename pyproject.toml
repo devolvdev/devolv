@@ -12,7 +12,8 @@ authors = [{ name = "Devolv Dev", email = "devolv.dev@gmail.com" }]
 dependencies = [
     "typer>=0.9",
     "PyYAML",
-    "deepdiff>=6.0.0"
+    "deepdiff>=6.0.0",
+    "boto3"
 ]
 dynamic = ["version"]
 
