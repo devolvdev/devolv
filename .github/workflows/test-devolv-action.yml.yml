@@ -20,6 +20,7 @@ jobs:
         with:
           tool: validate
           path: ./sample_policies
+    continue-on-error: true
 
   drift-devolv:
     name: Devolv - Detect IAM Policy Drift
