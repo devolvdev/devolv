@@ -1,0 +1,36 @@
+name: Test Devolv Action
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-devolv-action:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout test repo
+      uses: actions/checkout@v3
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ap-south-1
+        role-to-assume: arn:aws:iam::149704127940:policy/Devolvuserpolicy
+
+    - name: Use Devolv Action - validate
+      uses: devolvdev/devolv-action@v1
+      with:
+        tool: validate
+        file: ./tests
+
+    - name: Use Devolv Action - drift
+      uses: devolvdev/devolv-action@v1
+      with:
+        tool: drift
+        policy-name: DevolvTestPolicyHuge
+        file: ./Devolv-source-code/test-devolv-policy.json
