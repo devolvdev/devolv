@@ -30,7 +30,8 @@ jobs:
         uses: devolvdev/devolv-actions@v1
         with:
           tool: validate
-          path: sample-policies
+          path: ./sample_policies
+
 
       - name: Use Devolv Action - drift
         uses: devolvdev/devolv-actions@v1
