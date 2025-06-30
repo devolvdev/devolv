@@ -32,7 +32,7 @@ jobs:
         uses: devolvdev/devolv-actions@v1
         with:
           tool: validate
-          file: ./tests
+          path: ./tests
 
       - name: Use Devolv Action - drift
         uses: devolvdev/devolv-actions@v1
