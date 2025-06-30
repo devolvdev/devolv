@@ -39,8 +39,8 @@ def generate_diff_report(local_policy, aws_policy):
         aws_str = str(aws_policy)
 
     # Split into lines
-    local_lines = local_str.splitlines(keepends=True)
-    aws_lines = aws_str.splitlines(keepends=True)
+    local_lines = local_str.splitlines(keepends=False)
+    aws_lines = aws_str.splitlines(keepends=False)
 
     # Generate unified diff
     diff_lines = list(difflib.unified_diff(
