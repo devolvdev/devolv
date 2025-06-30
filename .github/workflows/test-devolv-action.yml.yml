@@ -23,13 +23,13 @@ jobs:
         role-to-assume: arn:aws:iam::149704127940:policy/Devolvuserpolicy
 
     - name: Use Devolv Action - validate
-      uses: devolvdev/devolv-action@v1
+      uses: devolvdev/devolv-actions@v1
       with:
         tool: validate
         file: ./tests
 
     - name: Use Devolv Action - drift
-      uses: devolvdev/devolv-action@v1
+      uses: devolvdev/devolv-actions@v1
       with:
         tool: drift
         policy-name: DevolvTestPolicyHuge
