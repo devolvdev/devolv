@@ -2,6 +2,7 @@ import json
 import difflib
 from rich.console import Console
 from rich.text import Text
+import typer
 
 def clean_policy(policy):
     """
@@ -54,6 +55,7 @@ def generate_diff_report(local_policy, aws_policy):
         console.print("✅ No drift detected: Policies match.", style="green")
         return
 
+    console.print("❌ Drift detected — see diff below", style="bold red")
     i = 0
     while i < len(diff_lines):
         line = diff_lines[i]
@@ -98,3 +100,4 @@ def generate_diff_report(local_policy, aws_policy):
         else:
             console.print(Text(line))  # Fallback for any edge case lines
         i += 1
+    raise typer.Exit(1)

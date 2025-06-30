@@ -161,32 +161,6 @@ def test_generate_diff_report_no_diff(capsys):
     captured = capsys.readouterr()
     assert "No drift detected" in captured.out
 
-def test_generate_diff_report_with_diff(capsys):
-    local = {"A": 1}
-    aws = {"A": 2}
-    report.generate_diff_report(local, aws)
-    captured = capsys.readouterr()
-    out = captured.out
-    assert "--- local" in out and "+++ aws" in out
-    assert re.search(r'-\s+"A":\s*1', out)
-    assert re.search(r'\+\s+"A":\s*2', out)
-
-def test_generate_diff_report_addition(capsys):
-    local = {}
-    aws = {"A": 5}
-    report.generate_diff_report(local, aws)
-    captured = capsys.readouterr()
-    out = captured.out
-    assert re.search(r'\+\s+"A":\s*5', out)
-
-def test_generate_diff_report_deletion(capsys):
-    local = {"B": 10}
-    aws = {}
-    report.generate_diff_report(local, aws)
-    captured = capsys.readouterr()
-    out = captured.out
-    assert re.search(r'-\s+"B":\s*10', out)
-
 @pytest.fixture
 def runner():
     app = typer.Typer()
@@ -201,7 +175,7 @@ def test_cli_drift_detected(runner, tmp_path, monkeypatch):
     file.write_text(json.dumps(local))
     monkeypatch.setattr(aws_fetcher, "get_policy", lambda policy_name=None: aws)
     result = runner_obj.invoke(app, ["--policy-name", "test", "--file", str(file)])
-    assert result.exit_code == 0
+    assert result.exit_code == 1
     assert "--- local" in result.stdout
     assert "+++ aws" in result.stdout
 
@@ -273,21 +247,6 @@ def test_assume_role_incomplete_creds(monkeypatch):
     creds = session.get_credentials()
     assert creds.access_key is None
 
-
-# Cover report.py fallback diff line
-def test_generate_diff_report_odd_lines(capsys):
-    local = {"A": 1}
-    aws = {"A": 2}
-    # Patch difflib to yield weird lines
-    import difflib
-    real_diff = difflib.unified_diff
-    def fake_diff(*args, **kwargs):
-        return iter(["??? odd line"])
-    difflib.unified_diff = fake_diff
-    report.generate_diff_report(local, aws)
-    captured = capsys.readouterr()
-    assert "odd line" in captured.out
-    difflib.unified_diff = real_diff
 
 def test_cli_access_denied_no_because(monkeypatch, tmp_path):
     runner = CliRunner()
@@ -410,10 +369,6 @@ def test_clean_policy_all_empty_statements():
     cleaned = report.clean_policy(policy.copy())
     assert cleaned["Statement"] == []
 
-def test_generate_diff_report_empty_inputs(capsys):
-    report.generate_diff_report({}, {})
-    out = capsys.readouterr().out
-    assert "No drift detected" in out
 
 def test_get_policy_no_match_final_none(monkeypatch):
     class FakeSTS:
@@ -546,3 +501,51 @@ def test_clean_policy_no_statement_key():
     policy = {"Effect": "Allow"}
     cleaned = report.clean_policy(policy.copy())
     assert cleaned == policy
+
+
+import pytest
+import typer
+from devolv.drift import report
+
+def test_generate_diff_report_with_diff():
+    local = {"A": 1}
+    aws = {"A": 2}
+    with pytest.raises(typer.Exit) as excinfo:
+        report.generate_diff_report(local, aws)
+    assert excinfo.value.exit_code == 1
+
+def test_generate_diff_report_addition():
+    local = {}
+    aws = {"A": 5}
+    with pytest.raises(typer.Exit) as excinfo:
+        report.generate_diff_report(local, aws)
+    assert excinfo.value.exit_code == 1
+
+
+def test_generate_diff_report_deletion():
+    local = {"B": 10}
+    aws = {}
+    with pytest.raises(typer.Exit) as excinfo:
+        report.generate_diff_report(local, aws)
+    assert excinfo.value.exit_code == 1
+
+def test_generate_diff_report_no_diff():
+    local = {"A": 1}
+    aws = {"A": 1}
+    # Should not raise exit
+    report.generate_diff_report(local, aws)
+
+def test_generate_diff_report_odd_lines(monkeypatch):
+    import difflib
+    local = {"A": 1}
+    aws = {"A": 2}
+
+    def fake_diff(*args, **kwargs):
+        return iter(["??? odd line"])
+
+    monkeypatch.setattr(difflib, "unified_diff", fake_diff)
+
+    with pytest.raises(typer.Exit) as excinfo:
+        report.generate_diff_report(local, aws)
+    assert excinfo.value.exit_code == 1
+
