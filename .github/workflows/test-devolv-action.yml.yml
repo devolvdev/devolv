@@ -32,10 +32,17 @@ jobs:
           tool: validate
           path: ./sample_policies
 
-
       - name: Use Devolv Action - drift
         uses: devolvdev/devolv-actions@v1
         with:
           tool: drift
           policy-name: DevolvTestPolicyHuge
           path: ./test-devolv-policy.json
+
+      - name: Upload Devolv findings
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: devolv-findings
+          path: findings.json
+          if-no-files-found: ignore
