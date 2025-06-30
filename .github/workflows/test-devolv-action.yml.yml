@@ -21,8 +21,6 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ap-south-1
           role-to-assume: arn:aws:iam::149704127940:role/DevolvCIRole
-          # Removed fail-on-error (invalid input)
-          # Added this to skip session tagging if you don't need tags
           role-skip-session-tagging: true
 
       - name: Debug AWS identity after AssumeRole
@@ -39,4 +37,4 @@ jobs:
         with:
           tool: drift
           policy-name: DevolvTestPolicyHuge
-          file: ./Devolv-source-code/test-devolv-policy.json
+          path: ./Devolv-source-code/test-devolv-policy.json
