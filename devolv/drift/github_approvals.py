@@ -1,4 +1,5 @@
 import os
+import subprocess
 from github import Github
 
 def _get_github_token():
@@ -48,14 +49,21 @@ def create_github_pr(repo: str, head_branch: str, title: str, body: str, base: s
 
 def push_branch(branch_name: str):
     """
-    Create, commit, and push a branch with local changes to GitHub.
+    Create and push a branch with committed changes.
     """
     try:
-        os.system(f"git checkout -b {branch_name}")
-        os.system("git add .")
-        os.system("git commit -m 'Update policy via Devolv drift'")
-        os.system(f"git push origin {branch_name}")
-        print(f"✅ Pushed branch {branch_name} to origin")
-    except Exception as e:
-        print(f"❌ Failed to push branch {branch_name}: {e}")
-        raise
+        subprocess.run(["git", "checkout", "-b", branch_name], check=True)
+
+        # Configure git user identity locally
+        subprocess.run(["git", "config", "user.email", "github-actions@users.noreply.github.com"], check=True)
+        subprocess.run(["git", "config", "user.name", "github-actions"], check=True)
+
+        subprocess.run(["git", "add", "."], check=True)
+        subprocess.run(["git", "commit", "-m", f"Update policy from AWS: {branch_name}"], check=True)
+        subprocess.run(["git", "push", "--set-upstream", "origin", branch_name], check=True)
+
+        typer.echo(f"✅ Pushed branch {branch_name} to origin.")
+    except subprocess.CalledProcessError as e:
+        typer.echo(f"❌ Git command failed: {e}")
+        raise typer.Exit(1)
+
