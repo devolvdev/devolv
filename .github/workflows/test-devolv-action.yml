@@ -26,7 +26,7 @@ jobs:
         uses: devolvdev/devolv-actions@v2
         with:
           tool: drift
-          policy-name: DevolvTestPolicy
+          policy-name: DevolvTestPolicyHuge
           path: ./test-devolv-policy.json
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
