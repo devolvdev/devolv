@@ -2,6 +2,7 @@ import json
 import boto3
 import typer
 import os
+import subprocess
 
 from devolv.drift.aws_fetcher import get_aws_policy_document, merge_policy_documents
 from devolv.drift.issues import create_approval_issue, wait_for_sync_choice
@@ -9,6 +10,20 @@ from devolv.drift.github_approvals import create_github_pr
 from devolv.drift.report import detect_and_print_drift
 
 app = typer.Typer()
+
+def push_branch(branch_name: str):
+    """
+    Create and push a branch with committed changes.
+    """
+    try:
+        subprocess.run(["git", "checkout", "-b", branch_name], check=True)
+        subprocess.run(["git", "add", "."], check=True)
+        subprocess.run(["git", "commit", "-m", f"Update policy from AWS: {branch_name}"], check=True)
+        subprocess.run(["git", "push", "--set-upstream", "origin", branch_name], check=True)
+        typer.echo(f"✅ Pushed branch {branch_name} to origin.")
+    except subprocess.CalledProcessError as e:
+        typer.echo(f"❌ Git command failed: {e}")
+        raise typer.Exit(1)
 
 @app.command()
 def drift(
@@ -23,14 +38,12 @@ def drift(
     Detect drift between local policy (file) and AWS policy (ARN),
     create GitHub issue for approval, and perform sync based on comment.
     """
-    # Auto-detect account ID if not provided
     if not account_id:
         sts = boto3.client("sts")
         account_id = sts.get_caller_identity()["Account"]
 
     policy_arn = f"arn:aws:iam::{account_id}:policy/{policy_name}"
 
-    # Load local policy document
     try:
         with open(policy_file) as f:
             local_doc = json.load(f)
@@ -38,16 +51,13 @@ def drift(
         typer.echo(f"❌ Local policy file {policy_file} not found.")
         raise typer.Exit(1)
 
-    # Fetch AWS policy document
     aws_doc = get_aws_policy_document(policy_arn)
     drift = detect_and_print_drift(local_doc, aws_doc)
 
-    # If no drift and no approval flag, exit
     if not drift and not approval_anyway:
         typer.echo("✅ No drift detected. Use --approval-anyway to force approval.")
         raise typer.Exit()
 
-    # Ensure we know which repo to use
     if not repo_full_name:
         repo_full_name = os.getenv("GITHUB_REPOSITORY")
 
@@ -55,7 +65,6 @@ def drift(
         typer.echo("❌ GitHub repo not specified. Use --repo or set GITHUB_REPOSITORY.")
         raise typer.Exit(1)
 
-    # Create GitHub issue
     token = os.getenv("GITHUB_TOKEN")
     if not token:
         typer.echo("❌ GITHUB_TOKEN not set in environment.")
@@ -64,7 +73,6 @@ def drift(
     issue_num = create_approval_issue(repo_full_name, token, policy_name)
     typer.echo(f"Issue #{issue_num} created for approval.")
 
-    # Wait for sync choice comment
     choice = wait_for_sync_choice(repo_full_name, issue_num, token)
 
     if choice == "local->aws":
@@ -86,9 +94,12 @@ def drift(
         new_content = json.dumps(aws_doc, indent=2)
         with open(policy_file, "w") as f:
             f.write(new_content)
+
         branch = f"update-policy-{policy_name}"
         pr_title = f"Update {policy_file} from AWS policy"
         pr_body = "This PR updates the local policy file with the AWS default version."
+
+        push_branch(branch)
         pr_num = create_github_pr(repo_full_name, branch, pr_title, pr_body)
         typer.echo(f"✅ Created PR #{pr_num}: updated {policy_file} from AWS policy.")
 

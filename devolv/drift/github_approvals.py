@@ -45,3 +45,17 @@ def create_github_pr(repo: str, head_branch: str, title: str, body: str, base: s
     except Exception as e:
         print(f"❌ Failed to create PR in {repo}: {e}")
         raise
+
+def push_branch(branch_name: str):
+    """
+    Create, commit, and push a branch with local changes to GitHub.
+    """
+    try:
+        os.system(f"git checkout -b {branch_name}")
+        os.system("git add .")
+        os.system("git commit -m 'Update policy via Devolv drift'")
+        os.system(f"git push origin {branch_name}")
+        print(f"✅ Pushed branch {branch_name} to origin")
+    except Exception as e:
+        print(f"❌ Failed to push branch {branch_name}: {e}")
+        raise
