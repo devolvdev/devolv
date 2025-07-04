@@ -22,8 +22,8 @@ dev = [
     "pytest",
     "pytest-cov",
     "coverage-badge",
-    "rich"
-    "pygithub"
+    "rich",
+    "PyGithub"
 ]
 
 [project.scripts]

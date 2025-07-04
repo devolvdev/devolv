@@ -1,5 +1,4 @@
 import boto3
-import json
 
 def get_aws_policy_document(policy_arn: str) -> dict:
     """
