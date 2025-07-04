@@ -36,13 +36,13 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ap-south-1
-          role-to-assume: arn:aws:iam::149704127940:role/DevolvCIRole
+          aws-region: *******
+          role-to-assume: arn:aws:iam::*******:role/DevolvCIRole
           role-skip-session-tagging: true
 
       - name: Run Devolv Drift Detection
         uses: devolvdev/devolv-actions@v1
         with:
-          tool: drift
-          policy-name: DevolvTestPolicyHuge
-          path: ./test-devolv-policy.json
+          tool: drift  # drift = detect IAM drift (validator also available)  
+          policy-name: DevolvTestPolicyHuge # Name of the IAM policy in AWS  
+          path: ./test-devolv-policy.json  # Path to your local IaC policy file 
