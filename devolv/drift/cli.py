@@ -4,7 +4,7 @@ import typer
 import os
 
 from devolv.drift.aws_fetcher import get_aws_policy_document, merge_policy_documents
-from devolv.drift.github_issues import create_approval_issue, wait_for_sync_choice
+from devolv.drift.issues import create_approval_issue, wait_for_sync_choice
 from devolv.drift.github_approvals import create_github_pr
 from devolv.drift.report import detect_and_print_drift
 
