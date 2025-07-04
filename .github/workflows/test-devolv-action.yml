@@ -6,7 +6,12 @@ on:
       - main    # Adjust if you're using a different default branch
   workflow_dispatch: {}
 
+permissions:
+  contents: write
+  issues: write
+  
 jobs:
+
   test-devolv:
     runs-on: ubuntu-latest
 
