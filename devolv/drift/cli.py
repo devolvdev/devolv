@@ -17,6 +17,11 @@ def push_branch(branch_name: str):
     """
     try:
         subprocess.run(["git", "checkout", "-b", branch_name], check=True)
+
+        # ✅ Ensure Git identity is set (important for CI runners)
+        subprocess.run(["git", "config", "user.email", "github-actions@users.noreply.github.com"], check=True)
+        subprocess.run(["git", "config", "user.name", "github-actions"], check=True)
+
         subprocess.run(["git", "add", "."], check=True)
         subprocess.run(["git", "commit", "-m", f"Update policy from AWS: {branch_name}"], check=True)
         subprocess.run(["git", "push", "--set-upstream", "origin", branch_name], check=True)

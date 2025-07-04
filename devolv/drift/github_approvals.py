@@ -1,7 +1,7 @@
 import os
 import subprocess
 from github import Github
-
+import typer
 def _get_github_token():
     token = os.getenv("GITHUB_TOKEN")
     if not token:
