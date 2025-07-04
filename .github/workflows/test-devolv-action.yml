@@ -1,6 +1,9 @@
 name: Devolv Action Test
 
 on:
+  push:
+    branches:
+      - main    # Adjust if you're using a different default branch
   workflow_dispatch: {}
 
 jobs:
