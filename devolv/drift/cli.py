@@ -16,7 +16,8 @@ def drift(
     policy_file: str = typer.Option(..., "--file", help="Path to local policy file"),
     account_id: str = typer.Option(None, "--account-id", help="AWS Account ID (optional, auto-detected if not provided)"),
     approvers: str = typer.Option("", help="Comma-separated GitHub usernames for approval"),
-    approval_anyway: bool = typer.Option(False, "--approval-anyway", help="Request approval even if no drift")
+    approval_anyway: bool = typer.Option(False, "--approval-anyway", help="Request approval even if no drift"),
+    repo_full_name: str = typer.Option(None, "--repo", help="GitHub repo full name (e.g., org/repo)")
 ):
     """
     Detect drift between local policy (file) and AWS policy (ARN),
@@ -46,17 +47,25 @@ def drift(
         typer.echo("✅ No drift detected. Use --approval-anyway to force approval.")
         raise typer.Exit()
 
+    # Ensure we know which repo to use
+    if not repo_full_name:
+        repo_full_name = os.getenv("GITHUB_REPOSITORY")
+
+    if not repo_full_name:
+        typer.echo("❌ GitHub repo not specified. Use --repo or set GITHUB_REPOSITORY.")
+        raise typer.Exit(1)
+
     # Create GitHub issue
     token = os.getenv("GITHUB_TOKEN")
     if not token:
         typer.echo("❌ GITHUB_TOKEN not set in environment.")
         raise typer.Exit(1)
 
-    issue_num = create_approval_issue("owner/repo", token, policy_name)
+    issue_num = create_approval_issue(repo_full_name, token, policy_name)
     typer.echo(f"Issue #{issue_num} created for approval.")
 
     # Wait for sync choice comment
-    choice = wait_for_sync_choice("owner/repo", issue_num, token)
+    choice = wait_for_sync_choice(repo_full_name, issue_num, token)
 
     if choice == "local->aws":
         merged_doc = merge_policy_documents(local_doc, aws_doc)
@@ -80,7 +89,7 @@ def drift(
         branch = f"update-policy-{policy_name}"
         pr_title = f"Update {policy_file} from AWS policy"
         pr_body = "This PR updates the local policy file with the AWS default version."
-        pr_num = create_github_pr("owner/repo", branch, pr_title, pr_body)
+        pr_num = create_github_pr(repo_full_name, branch, pr_title, pr_body)
         typer.echo(f"✅ Created PR #{pr_num}: updated {policy_file} from AWS policy.")
 
     else:
