@@ -1,5 +1,5 @@
 import boto3
-
+ 
 def get_aws_policy_document(policy_arn: str) -> dict:
     """
     Fetch the JSON document of the default version of a managed IAM policy.
