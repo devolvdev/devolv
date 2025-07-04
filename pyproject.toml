@@ -13,7 +13,8 @@ dependencies = [
     "typer>=0.9",
     "PyYAML",
     "deepdiff>=6.0.0",
-    "boto3"
+    "boto3",
+    "PyGithub"
 ]
 dynamic = ["version"]
 
@@ -22,8 +23,7 @@ dev = [
     "pytest",
     "pytest-cov",
     "coverage-badge",
-    "rich",
-    "PyGithub"
+    "rich"
 ]
 
 [project.scripts]
