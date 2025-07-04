@@ -1,48 +1,27 @@
-name: Test Devolv Action
+name: Devolv Action Test
 
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+  workflow_dispatch: {}
 
 jobs:
-  validate-devolv:
-    name: Devolv - Validate IAM Policies
+  test-devolv:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout test repo
+      - name: Checkout code
         uses: actions/checkout@v3
+
+      - name: Run Devolv Drift
+        uses: your-org/devolv-action@v2
+        with:
+          tool: drift
+          policy-name: DevolvTestPolicy
+          path: ./test-devolv-policy.json
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run Devolv Validate
-        uses: devolvdev/devolv-actions@v1
+        uses: your-org/devolv-action@v2
         with:
           tool: validate
-          path: ./sample_policies
-    continue-on-error: true
-
-  drift-devolv:
-    name: Devolv - Detect IAM Policy Drift
-    runs-on: ubuntu-latest
-    needs: validate-devolv
-
-    steps:
-      - name: Checkout test repo
-        uses: actions/checkout@v3
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: *******
-          role-to-assume: arn:aws:iam::*******:role/DevolvCIRole
-          role-skip-session-tagging: true
-
-      - name: Run Devolv Drift Detection
-        uses: devolvdev/devolv-actions@v1
-        with:
-          tool: drift  # drift = detect IAM drift (validator also available)  
-          policy-name: DevolvTestPolicyHuge # Name of the IAM policy in AWS  
-          path: ./test-devolv-policy.json  # Path to your local IaC policy file 
+          path: ./test-devolv-policy.json
+          github-token: ${{ secrets.GITHUB_TOKEN }}
