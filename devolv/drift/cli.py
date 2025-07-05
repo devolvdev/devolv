@@ -12,7 +12,8 @@ from devolv.drift.aws_fetcher import (
 )
 from devolv.drift.issues import create_approval_issue, wait_for_sync_choice
 from devolv.drift.github_approvals import create_github_pr
-from devolv.drift.report import detect_and_print_drift
+from devolv.drift.report import print_drift_diff
+
 app = typer.Typer()
 
 def push_branch(branch_name: str):
@@ -77,7 +78,7 @@ def drift(
     drift_detected = detect_drift(local_doc, aws_doc)
 
     if drift_detected:
-        detect_and_print_drift(local_doc, aws_doc)
+        print_drift_diff(local_doc, aws_doc)
 
     if not drift_detected:
         _update_aws_policy(iam, policy_arn, local_doc)
