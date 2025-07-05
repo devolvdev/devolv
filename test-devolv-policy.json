@@ -132,6 +132,12 @@
       "Effect": "Allow",
       "Action": "ssm:GetParameter",
       "Resource": "arn:aws:ssm:us-east-1:123456789012:parameter/ExampleParam"
+    },
+    {
+      "Sid": "Dynamo",
+      "Effect": "Allow",
+      "Action": "dynamodb:PutItem",
+      "Resource": "arn:aws:dynamodb:us-east-1:123456789012:table/Table"
     }
   ]
 }
