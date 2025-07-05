@@ -1,22 +1,21 @@
 from github import Github
 import time
 
-def create_approval_issue(repo_full_name, token, policy_name):
-    g = Github(token)
-    repo = g.get_repo(repo_full_name)
-    body = (
-        f"Drift detected for policy `{policy_name}`.\n\n"
-        "Please comment:\n"
-        "- `local->aws` to sync local changes to AWS\n"
-        "- `aws->local` to sync AWS changes to local file\n"
-        "- `aws<->local` to sync both ways (first AWS -> local, then local -> AWS)\n"
-        "- `skip` to do nothing"
-    )
+def create_approval_issue(repo_full_name, token, policy_name,assignees=None):
+    gh = Github(token)
+    repo = gh.get_repo(repo_full_name)
+
+    title = f"Approval needed for IAM policy: {policy_name}"
+    body = f"Please review and approve the sync for `{policy_name}`."
+
     issue = repo.create_issue(
-        title=f"Devolv Drift Sync Approval Needed: {policy_name}",
-        body=body
+        title=title,
+        body=body,
+        assignees=assignees or []
     )
-    return issue.number
+
+    print(f"✅ Created issue #{issue.number} in {repo_full_name}: {issue.html_url}")
+    return issue.number, issue.html_url
 
 def wait_for_sync_choice(repo_full_name, issue_number, token):
     g = Github(token)
