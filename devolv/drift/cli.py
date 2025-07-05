@@ -39,7 +39,6 @@ def push_branch(branch_name: str):
         raise typer.Exit(1)
 
 def detect_drift(local_doc, aws_doc) -> bool:
-    """Detect removal drift: AWS has permissions missing from local (danger)."""
     local_statements = {json.dumps(s, sort_keys=True) for s in local_doc.get("Statement", [])}
     aws_statements = {json.dumps(s, sort_keys=True) for s in aws_doc.get("Statement", [])}
 
@@ -47,12 +46,7 @@ def detect_drift(local_doc, aws_doc) -> bool:
 
     if missing_in_local:
         typer.echo("❌ Drift detected: Local is missing permissions present in AWS.")
-        # No need to print each JSON line — rich diff will handle details
         return True
-
-    typer.echo("✅ No removal drift detected (local may have extra permissions; that's fine).")
-    return False
-
 
     typer.echo("✅ No removal drift detected (local may have extra permissions; that's fine).")
     return False
@@ -102,7 +96,11 @@ def drift(
         raise typer.Exit(1)
 
     assignees = [a.strip() for a in approvers.split(",") if a.strip()]
-    issue_num, _ = create_approval_issue(repo_full_name, token, policy_name, assignees=assignees)
+    
+    # 💡 Pass drift_detected to dynamically control issue body
+    issue_num, _ = create_approval_issue(
+        repo_full_name, token, policy_name, assignees=assignees, drift_detected=drift_detected
+    )
     issue_url = f"https://github.com/{repo_full_name}/issues/{issue_num}"
     typer.echo(f"✅ Approval issue created: {issue_url}")
 
@@ -121,6 +119,22 @@ def drift(
         _update_aws_policy(iam, policy_arn, superset_doc)
         typer.echo(f"✅ AWS policy {policy_arn} updated with superset of local + AWS.")
         _update_local_and_create_pr(superset_doc, policy_file, repo_full_name, policy_name, issue_num, token, "with superset of local + AWS")
+
+    elif choice == "accept":
+        typer.echo("✅ Approval received: no changes required. Closing issue.")
+        gh = Github(token)
+        repo = gh.get_repo(repo_full_name)
+        issue = repo.get_issue(number=issue_num)
+        issue.create_comment("✅ Approved current state. No action needed.")
+        issue.edit(state="closed")
+
+    elif choice == "reject":
+        typer.echo("❌ Approval rejected: no changes made. Closing issue.")
+        gh = Github(token)
+        repo = gh.get_repo(repo_full_name)
+        issue = repo.get_issue(number=issue_num)
+        issue.create_comment("❌ Rejected current state. No action taken.")
+        issue.edit(state="closed")
 
     else:
         typer.echo("⏭ No synchronization performed (skip).")
