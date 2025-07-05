@@ -13,21 +13,31 @@ from github import Github  # Needed for auto-close
 app = typer.Typer()
 
 def push_branch(branch_name: str):
+    import subprocess
+    import typer
+
     try:
+        # Create or switch to branch safely
         subprocess.run(["git", "checkout", "-B", branch_name], check=True)
+
+        # Ensure Git identity is set
         subprocess.run(["git", "config", "user.email", "github-actions@users.noreply.github.com"], check=True)
         subprocess.run(["git", "config", "user.name", "github-actions"], check=True)
+
+        # Add, commit
         subprocess.run(["git", "add", "."], check=True)
         subprocess.run(["git", "commit", "-m", f"Update policy: {branch_name}"], check=True)
 
+        # Try pushing
         try:
             subprocess.run(["git", "push", "--set-upstream", "origin", branch_name], check=True)
         except subprocess.CalledProcessError:
-            typer.echo("⚠️ Push failed. Trying to pull + re-push...")
+            typer.echo("⚠️ Initial push failed. Attempting rebase + push...")
             subprocess.run(["git", "pull", "--rebase", "origin", branch_name], check=True)
             subprocess.run(["git", "push", "--set-upstream", "origin", branch_name], check=True)
 
         typer.echo(f"✅ Pushed branch {branch_name} to origin.")
+
     except subprocess.CalledProcessError as e:
         typer.echo(f"❌ Git command failed: {e}")
         raise typer.Exit(1)
@@ -105,28 +115,36 @@ def _update_aws_policy(iam, policy_arn, policy_doc):
     )
 
 def _update_local_and_create_pr(doc, policy_file, repo_full_name, policy_name, issue_num, token, description=""):
+    import json
+    from github import Github
+    from devolv.drift.github_approvals import create_github_pr
+
     new_content = json.dumps(doc, indent=2)
     with open(policy_file, "w") as f:
         f.write(new_content)
 
-    branch_base = (
+    # Clean branch name
+    branch = (
         f"{description.replace(' ', '-').replace('+', 'plus').replace('/', '-')}-policy-{policy_name}"
         .strip("-")
         .lower()
     )
-    branch_name = push_branch(branch_base)
+
+    push_branch(branch)
 
     pr_title = f"Update {policy_file} {description}".strip()
     pr_body = f"This PR updates `{policy_file}` {description}.\n\nLinked to issue #{issue_num}.".strip()
-    pr_num, pr_url = create_github_pr(repo_full_name, branch_name, pr_title, pr_body, issue_num=issue_num)
+
+    # ✅ Pass correct branch name
+    pr_num, pr_url = create_github_pr(repo_full_name, branch, pr_title, pr_body, issue_num=issue_num)
 
     typer.echo(f"✅ Created PR #{pr_num}: {pr_url}")
 
-    # Close issue *immediately after PR link is posted*
+    # ✅ Auto-close issue immediately
     gh = Github(token)
     repo = gh.get_repo(repo_full_name)
     issue = repo.get_issue(number=issue_num)
     issue.create_comment(f"✅ PR created and linked: {pr_url}. Closing issue.")
     issue.edit(state="closed")
-    typer.echo(f"💬 Commented on and closed issue #{issue_num}")
+
 
