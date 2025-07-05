@@ -43,19 +43,20 @@ def create_github_pr(repo: str, head_branch: str, title: str, body: str, base: s
             head=head_branch,
             base=base
         )
-        print(f"✅ Created PR #{pr.number} in {repo}: {pr.html_url}")
+        print(f"✅ Created PR #{pr.number}: {pr.html_url}")
 
         if issue_num:
             issue = repo_obj.get_issue(number=issue_num)
             issue.create_comment(f"A PR has been created for this sync: {pr.html_url}")
             issue.edit(state="closed")
-            print(f"💬 Commented on and closed issue #{issue_num}.")
+            print(f"💬 Linked and closed issue #{issue_num}")
 
         return pr.number, pr.html_url
 
     except Exception as e:
-        print(f"❌ Failed to create PR in {repo}: {e}")
+        print(f"❌ Failed to create PR: {e}")
         raise
+
 
 
 def push_branch(branch_name: str):

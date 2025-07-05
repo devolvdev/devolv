@@ -113,7 +113,7 @@ def _update_local_and_create_pr(doc, policy_file, repo_full_name, policy_name, i
     pr_body = f"This PR updates `{policy_file}` {description}.\n\nLinked to issue #{issue_num}.".strip()
     pr_num, pr_url = create_github_pr(repo_full_name, branch, pr_title, pr_body, issue_num=issue_num)
 
-    typer.echo(f"✅ Created PR #{pr_num}: {pr_url}")
+    #typer.echo(f"✅ Created PR #{pr_num}: {pr_url}")
 
     # Auto-close issue
     gh = Github(token)
