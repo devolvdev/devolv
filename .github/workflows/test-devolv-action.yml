@@ -36,6 +36,7 @@ jobs:
           path: ./test-devolv-policy.json
           approvers: RkSinghDeo, devolvdev
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          approval-anyway: true
         
       - name: Run Devolv Validate
         uses: devolvdev/devolv-actions@v2
