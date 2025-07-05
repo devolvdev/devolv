@@ -20,12 +20,6 @@
       "Resource": "*"
     },
     {
-      "Sid": "EC2Start",
-      "Effect": "Allow",
-      "Action": "ec2:StartInstances",
-      "Resource": "arn:aws:ec2:us-east-1:123456789012:instance/*"
-    },
-    {
       "Sid": "EC2Stop",
       "Effect": "Allow",
       "Action": "ec2:StopInstances",

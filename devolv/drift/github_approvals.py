@@ -12,7 +12,7 @@ def _get_github_token():
             "export GITHUB_TOKEN=${{ inputs.github-token }}"
         )
     return token
-
+ 
 def _get_github_repo(repo_full_name: str):
     gh = Github(_get_github_token())
     return gh.get_repo(repo_full_name)
