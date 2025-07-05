@@ -45,7 +45,7 @@ def create_github_pr(repo: str, head_branch: str, title: str, body: str, base: s
             head=head_branch,
             base=base
         )
-        print(f"✅ Created PR #{pr.number} in {repo}: {pr.html_url}")
+        #print(f"✅ Created PR #{pr.number} in {repo}: {pr.html_url}")
 
         if issue_num:
             issue = repo_obj.get_issue(number=issue_num)
