@@ -64,7 +64,7 @@ def drift(
 
     assignees = [a.strip() for a in approvers.split(",") if a.strip()]
     issue_num, _ = create_approval_issue(repo_full_name, token, policy_name, assignees=assignees)
-    typer.echo(f"✅ Created issue #{issue_num} for approval.")
+    #typer.echo(f"✅ Created issue #{issue_num} for approval.")
 
     choice = wait_for_sync_choice(repo_full_name, issue_num, token)
     iam = boto3.client("iam")
