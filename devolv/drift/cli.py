@@ -9,11 +9,10 @@ from devolv.drift.aws_fetcher import (
     get_aws_policy_document,
     merge_policy_documents,
     build_superset_policy,
-    detect_and_print_drift,
 )
 from devolv.drift.issues import create_approval_issue, wait_for_sync_choice
 from devolv.drift.github_approvals import create_github_pr
-
+from devolv.drift.report import detect_and_print_drift
 app = typer.Typer()
 
 def push_branch(branch_name: str):
