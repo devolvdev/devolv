@@ -26,12 +26,6 @@
       "Resource": "arn:aws:ec2:us-east-1:123456789012:instance/*"
     },
     {
-      "Sid": "DynamoGet",
-      "Effect": "Allow",
-      "Action": "dynamodb:GetItem",
-      "Resource": "arn:aws:dynamodb:us-east-1:123456789012:table/ExampleTable"
-    },
-    {
       "Sid": "DynamoPut",
       "Effect": "Allow",
       "Action": "dynamodb:PutItem",
