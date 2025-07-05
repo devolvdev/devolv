@@ -47,17 +47,14 @@ def push_branch(branch_name: str):
 
 
 def detect_drift(local_doc, aws_doc) -> bool:
-    local_statements = {json.dumps(s, sort_keys=True) for s in local_doc.get("Statement", [])}
-    aws_statements = {json.dumps(s, sort_keys=True) for s in aws_doc.get("Statement", [])}
-
-    missing_in_local = aws_statements - local_statements
-
-    if missing_in_local:
-        typer.echo("❌ Drift detected: Local is missing permissions present in AWS.")
+    from deepdiff import DeepDiff
+    diff = DeepDiff(aws_doc, local_doc, ignore_order=True)
+    if diff:
+        typer.echo(f"❌ Drift detected:\n{json.dumps(diff, indent=2)}")
         return True
-
-    typer.echo("✅ No removal drift detected (local may have extra permissions; that's fine).")
+    typer.echo("✅ No drift detected.")
     return False
+
 
 @app.command()
 def drift(
