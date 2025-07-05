@@ -2,6 +2,7 @@ import os
 import subprocess
 from github import Github
 import typer
+
 def _get_github_token():
     token = os.getenv("GITHUB_TOKEN")
     if not token:
@@ -16,22 +17,23 @@ def _get_github_repo(repo_full_name: str):
     gh = Github(_get_github_token())
     return gh.get_repo(repo_full_name)
 
-def create_github_issue(repo: str, title: str, body: str, assignees: list) -> int:
+def create_github_issue(repo: str, title: str, body: str, assignees: list) -> tuple:
     """
-    Create a GitHub issue using the GitHub API.
+    Create a GitHub issue and return (number, url)
     """
     try:
         repo_obj = _get_github_repo(repo)
         issue = repo_obj.create_issue(title=title, body=body, assignees=assignees)
-        print(f"✅ Created issue #{issue.number} in {repo}")
-        return issue.number
+        print(f"✅ Created issue #{issue.number} in {repo}: {issue.html_url}")
+        return issue.number, issue.html_url
     except Exception as e:
         print(f"❌ Failed to create issue in {repo}: {e}")
         raise
 
-def create_github_pr(repo: str, head_branch: str, title: str, body: str, base: str = "main") -> int:
+def create_github_pr(repo: str, head_branch: str, title: str, body: str, base: str = "main", issue_num: int = None) -> tuple:
     """
-    Create a GitHub pull request using the GitHub API.
+    Create a GitHub PR. If issue_num is provided, comment on the issue and close it.
+    Return (PR number, PR URL).
     """
     try:
         repo_obj = _get_github_repo(repo)
@@ -41,11 +43,20 @@ def create_github_pr(repo: str, head_branch: str, title: str, body: str, base: s
             head=head_branch,
             base=base
         )
-        print(f"✅ Created PR #{pr.number} in {repo}")
-        return pr.number
+        print(f"✅ Created PR #{pr.number} in {repo}: {pr.html_url}")
+
+        if issue_num:
+            issue = repo_obj.get_issue(number=issue_num)
+            issue.create_comment(f"A PR has been created for this sync: {pr.html_url}")
+            issue.edit(state="closed")
+            print(f"💬 Commented on and closed issue #{issue_num}.")
+
+        return pr.number, pr.html_url
+
     except Exception as e:
         print(f"❌ Failed to create PR in {repo}: {e}")
         raise
+
 
 def push_branch(branch_name: str):
     """
@@ -53,11 +64,8 @@ def push_branch(branch_name: str):
     """
     try:
         subprocess.run(["git", "checkout", "-b", branch_name], check=True)
-
-        # Configure git user identity locally
         subprocess.run(["git", "config", "user.email", "github-actions@users.noreply.github.com"], check=True)
         subprocess.run(["git", "config", "user.name", "github-actions"], check=True)
-
         subprocess.run(["git", "add", "."], check=True)
         subprocess.run(["git", "commit", "-m", f"Update policy from AWS: {branch_name}"], check=True)
         subprocess.run(["git", "push", "--set-upstream", "origin", branch_name], check=True)
@@ -66,4 +74,3 @@ def push_branch(branch_name: str):
     except subprocess.CalledProcessError as e:
         typer.echo(f"❌ Git command failed: {e}")
         raise typer.Exit(1)
-

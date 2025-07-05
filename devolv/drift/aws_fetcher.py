@@ -1,5 +1,6 @@
 import boto3
- 
+import json
+
 def get_aws_policy_document(policy_arn: str) -> dict:
     """
     Fetch the JSON document of the default version of a managed IAM policy.
@@ -23,3 +24,24 @@ def merge_policy_documents(local_doc: dict, aws_doc: dict) -> dict:
             merged.append(stmt)
     aws_doc["Statement"] = merged
     return aws_doc
+
+def build_superset_policy(local_doc: dict, aws_doc: dict) -> dict:
+    """
+    Combine local and AWS policy documents into a superset without duplicate statements.
+    """
+    local_statements = local_doc.get("Statement", [])
+    aws_statements = aws_doc.get("Statement", [])
+
+    seen = set()
+    combined = []
+
+    for stmt in local_statements + aws_statements:
+        stmt_str = json.dumps(stmt, sort_keys=True)
+        if stmt_str not in seen:
+            seen.add(stmt_str)
+            combined.append(stmt)
+
+    return {
+        "Version": "2012-10-17",
+        "Statement": combined
+    }

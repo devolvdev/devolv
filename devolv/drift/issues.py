@@ -9,6 +9,7 @@ def create_approval_issue(repo_full_name, token, policy_name):
         "Please comment:\n"
         "- `local->aws` to sync local changes to AWS\n"
         "- `aws->local` to sync AWS changes to local file\n"
+        "- `aws<->local` to sync both ways (first AWS -> local, then local -> AWS)\n"
         "- `skip` to do nothing"
     )
     issue = repo.create_issue(
@@ -26,7 +27,7 @@ def wait_for_sync_choice(repo_full_name, issue_number, token):
         comments = issue.get_comments()
         for comment in comments:
             content = comment.body.strip().lower()
-            if content in ["local->aws", "aws->local", "skip"]:
+            if content in ["local->aws", "aws->local", "aws<->local" "skip"]:
                 return content
         print("Waiting for approval comment...")
         time.sleep(30)  # Poll every 30 seconds
