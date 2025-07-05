@@ -109,23 +109,24 @@ def _update_local_and_create_pr(doc, policy_file, repo_full_name, policy_name, i
     with open(policy_file, "w") as f:
         f.write(new_content)
 
-    branch = (
+    branch_base = (
         f"{description.replace(' ', '-').replace('+', 'plus').replace('/', '-')}-policy-{policy_name}"
         .strip("-")
         .lower()
     )
-    push_branch(branch)
+    branch_name = push_branch(branch_base)
 
     pr_title = f"Update {policy_file} {description}".strip()
     pr_body = f"This PR updates `{policy_file}` {description}.\n\nLinked to issue #{issue_num}.".strip()
-    pr_num, pr_url = create_github_pr(repo_full_name, branch, pr_title, pr_body, issue_num=issue_num)
+    pr_num, pr_url = create_github_pr(repo_full_name, branch_name, pr_title, pr_body, issue_num=issue_num)
 
     typer.echo(f"✅ Created PR #{pr_num}: {pr_url}")
-    typer.echo(f"💬 Commented on and closed issue #{issue_num}")
 
-    # Auto-close issue
+    # Close issue *immediately after PR link is posted*
     gh = Github(token)
     repo = gh.get_repo(repo_full_name)
     issue = repo.get_issue(number=issue_num)
     issue.create_comment(f"✅ PR created and linked: {pr_url}. Closing issue.")
     issue.edit(state="closed")
+    typer.echo(f"💬 Commented on and closed issue #{issue_num}")
+
