@@ -60,18 +60,22 @@ def create_github_pr(repo: str, head_branch: str, title: str, body: str, base: s
 
 
 def push_branch(branch_name: str):
-    """
-    Create and push a branch with committed changes.
-    """
     try:
-        subprocess.run(["git", "checkout", "-b", branch_name], check=True)
+        subprocess.run(["git", "checkout", "-B", branch_name], check=True)
         subprocess.run(["git", "config", "user.email", "github-actions@users.noreply.github.com"], check=True)
         subprocess.run(["git", "config", "user.name", "github-actions"], check=True)
         subprocess.run(["git", "add", "."], check=True)
-        subprocess.run(["git", "commit", "-m", f"Update policy from AWS: {branch_name}"], check=True)
-        subprocess.run(["git", "push", "--set-upstream", "origin", branch_name], check=True)
+        subprocess.run(["git", "commit", "-m", f"Update policy: {branch_name}"], check=True)
+
+        try:
+            subprocess.run(["git", "push", "--set-upstream", "origin", branch_name], check=True)
+        except subprocess.CalledProcessError:
+            typer.echo("⚠️ Push failed. Trying to pull + re-push...")
+            subprocess.run(["git", "pull", "--rebase", "origin", branch_name], check=True)
+            subprocess.run(["git", "push", "--set-upstream", "origin", branch_name], check=True)
 
         typer.echo(f"✅ Pushed branch {branch_name} to origin.")
     except subprocess.CalledProcessError as e:
         typer.echo(f"❌ Git command failed: {e}")
         raise typer.Exit(1)
+

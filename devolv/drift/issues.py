@@ -24,7 +24,7 @@ def create_approval_issue(repo_full_name, token, policy_name, assignees=None):
         assignees=assignees or []
     )
 
-    print(f"✅ Created issue #{issue.number} in {repo_full_name}: {issue.html_url}")
+    #print(f"✅ Created issue #{issue.number} in {repo_full_name}: {issue.html_url}")
     return issue.number, issue.html_url
 
 

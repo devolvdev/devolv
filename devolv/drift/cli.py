@@ -14,12 +14,19 @@ app = typer.Typer()
 
 def push_branch(branch_name: str):
     try:
-        subprocess.run(["git", "checkout", "-b", branch_name], check=True)
+        subprocess.run(["git", "checkout", "-B", branch_name], check=True)
         subprocess.run(["git", "config", "user.email", "github-actions@users.noreply.github.com"], check=True)
         subprocess.run(["git", "config", "user.name", "github-actions"], check=True)
         subprocess.run(["git", "add", "."], check=True)
         subprocess.run(["git", "commit", "-m", f"Update policy: {branch_name}"], check=True)
-        subprocess.run(["git", "push", "--set-upstream", "origin", branch_name], check=True)
+
+        try:
+            subprocess.run(["git", "push", "--set-upstream", "origin", branch_name], check=True)
+        except subprocess.CalledProcessError:
+            typer.echo("⚠️ Push failed. Trying to pull + re-push...")
+            subprocess.run(["git", "pull", "--rebase", "origin", branch_name], check=True)
+            subprocess.run(["git", "push", "--set-upstream", "origin", branch_name], check=True)
+
         typer.echo(f"✅ Pushed branch {branch_name} to origin.")
     except subprocess.CalledProcessError as e:
         typer.echo(f"❌ Git command failed: {e}")
@@ -64,7 +71,7 @@ def drift(
 
     assignees = [a.strip() for a in approvers.split(",") if a.strip()]
     issue_num, _ = create_approval_issue(repo_full_name, token, policy_name, assignees=assignees)
-    #typer.echo(f"✅ Created issue #{issue_num} for approval.")
+    typer.echo(f"✅ Created issue #{issue_num} in {repo_full_name}: https://github.com/{repo_full_name}/issues/{issue_num}")
 
     choice = wait_for_sync_choice(repo_full_name, issue_num, token)
     iam = boto3.client("iam")
@@ -113,7 +120,8 @@ def _update_local_and_create_pr(doc, policy_file, repo_full_name, policy_name, i
     pr_body = f"This PR updates `{policy_file}` {description}.\n\nLinked to issue #{issue_num}.".strip()
     pr_num, pr_url = create_github_pr(repo_full_name, branch, pr_title, pr_body, issue_num=issue_num)
 
-    #typer.echo(f"✅ Created PR #{pr_num}: {pr_url}")
+    typer.echo(f"✅ Created PR #{pr_num}: {pr_url}")
+    typer.echo(f"💬 Commented on and closed issue #{issue_num}")
 
     # Auto-close issue
     gh = Github(token)
