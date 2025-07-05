@@ -33,19 +33,19 @@ def push_branch(branch_name: str):
         raise typer.Exit(1)
 
 def detect_drift(local_doc, aws_doc) -> bool:
-    """Detect if AWS permissions exist that are missing in local (removal drift)."""
-    local_statements = {json.dumps(stmt, sort_keys=True) for stmt in local_doc.get("Statement", [])}
-    aws_statements = {json.dumps(stmt, sort_keys=True) for stmt in aws_doc.get("Statement", [])}
+    """Detect removal drift: AWS has permissions missing from local (danger)."""
+    local_statements = {json.dumps(s, sort_keys=True) for s in local_doc.get("Statement", [])}
+    aws_statements = {json.dumps(s, sort_keys=True) for s in aws_doc.get("Statement", [])}
 
     missing_in_local = aws_statements - local_statements
 
     if missing_in_local:
-        typer.echo("❌ Drift detected: Your local policy is missing some permissions present in AWS.")
+        typer.echo("❌ Drift detected: Local is missing permissions present in AWS.")
         for stmt in missing_in_local:
             typer.echo(stmt)
         return True
 
-    typer.echo("✅ No drift detected (local may have extra permissions; that's fine).")
+    typer.echo("✅ No removal drift detected (local may have extra permissions; that's fine).")
     return False
 
 @app.command()
@@ -57,6 +57,7 @@ def drift(
     approval_anyway: bool = typer.Option(False, "--approval-anyway", help="Request approval even if no drift"),
     repo_full_name: str = typer.Option(None, "--repo", help="GitHub repo full name (e.g., org/repo)")
 ):
+    iam = boto3.client("iam")
     if not account_id:
         account_id = boto3.client("sts").get_caller_identity()["Account"]
     policy_arn = f"arn:aws:iam::{account_id}:policy/{policy_name}"
@@ -69,13 +70,16 @@ def drift(
         raise typer.Exit(1)
 
     aws_doc = get_aws_policy_document(policy_arn)
-
     drift_detected = detect_drift(local_doc, aws_doc)
 
-    if not drift_detected and not approval_anyway:
-        typer.echo("✅ No drift and no forced approval requested.")
-        raise typer.Exit()
+    if not drift_detected:
+        _update_aws_policy(iam, policy_arn, local_doc)
+        typer.echo(f"✅ AWS policy {policy_arn} updated to include any local additions.")
+        if not approval_anyway:
+            typer.echo("✅ No forced approval requested. Exiting.")
+            return
 
+    # From here, we need approval flow
     repo_full_name = repo_full_name or os.getenv("GITHUB_REPOSITORY")
     token = os.getenv("GITHUB_TOKEN")
 
@@ -90,7 +94,6 @@ def drift(
     issue_num, _ = create_approval_issue(repo_full_name, token, policy_name, assignees=assignees)
 
     choice = wait_for_sync_choice(repo_full_name, issue_num, token)
-    iam = boto3.client("iam")
 
     if choice == "local->aws":
         merged_doc = merge_policy_documents(local_doc, aws_doc)
@@ -110,10 +113,10 @@ def drift(
         typer.echo("⏭ No synchronization performed (skip).")
 
 def _update_aws_policy(iam, policy_arn, policy_doc):
-    versions = iam.list_policy_versions(PolicyArn=policy_arn)['Versions']
+    versions = iam.list_policy_versions(PolicyArn=policy_arn)["Versions"]
     if len(versions) >= 5:
-        oldest = sorted((v for v in versions if not v['IsDefaultVersion']), key=lambda v: v['CreateDate'])[0]
-        iam.delete_policy_version(PolicyArn=policy_arn, VersionId=oldest['VersionId'])
+        oldest = sorted((v for v in versions if not v["IsDefaultVersion"]), key=lambda v: v["CreateDate"])[0]
+        iam.delete_policy_version(PolicyArn=policy_arn, VersionId=oldest["VersionId"])
     iam.create_policy_version(
         PolicyArn=policy_arn,
         PolicyDocument=json.dumps(policy_doc),
