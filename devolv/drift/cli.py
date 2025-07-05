@@ -5,7 +5,12 @@ import boto3
 import typer
 from github import Github
 
-from devolv.drift.aws_fetcher import get_aws_policy_document, merge_policy_documents, build_superset_policy
+from devolv.drift.aws_fetcher import (
+    get_aws_policy_document,
+    merge_policy_documents,
+    build_superset_policy,
+    detect_and_print_drift,
+)
 from devolv.drift.issues import create_approval_issue, wait_for_sync_choice
 from devolv.drift.github_approvals import create_github_pr
 
@@ -72,6 +77,9 @@ def drift(
     aws_doc = get_aws_policy_document(policy_arn)
     drift_detected = detect_drift(local_doc, aws_doc)
 
+    if drift_detected:
+        detect_and_print_drift(local_doc, aws_doc)
+
     if not drift_detected:
         _update_aws_policy(iam, policy_arn, local_doc)
         typer.echo(f"✅ AWS policy {policy_arn} updated to include any local additions.")
@@ -79,7 +87,6 @@ def drift(
             typer.echo("✅ No forced approval requested. Exiting.")
             return
 
-    # From here, we need approval flow
     repo_full_name = repo_full_name or os.getenv("GITHUB_REPOSITORY")
     token = os.getenv("GITHUB_TOKEN")
 
@@ -92,6 +99,8 @@ def drift(
 
     assignees = [a.strip() for a in approvers.split(",") if a.strip()]
     issue_num, _ = create_approval_issue(repo_full_name, token, policy_name, assignees=assignees)
+    issue_url = f"https://github.com/{repo_full_name}/issues/{issue_num}"
+    typer.echo(f"✅ Approval issue created: {issue_url}")
 
     choice = wait_for_sync_choice(repo_full_name, issue_num, token)
 
