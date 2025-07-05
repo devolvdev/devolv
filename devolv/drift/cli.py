@@ -18,9 +18,12 @@ from devolv.drift.report import print_drift_diff
 app = typer.Typer()
 
 def push_branch(branch_name: str):
+    """
+    Create, commit to, and push a git branch, rebasing if needed.
+    """
     try:
         subprocess.run(["git", "checkout", "-B", branch_name], check=True)
-        subprocess.run(["git", "config", "user.email", "github-actions@users.noreply.github.com"], check=True)
+        subprocess.run(["git", "config", "user.email", "github-actions@users.noreply.github.com"], check=True)    
         subprocess.run(["git", "config", "user.name", "github-actions"], check=True)
         subprocess.run(["git", "add", "."], check=True)
         subprocess.run(["git", "commit", "-m", f"Update policy: {branch_name}"], check=True)
@@ -30,13 +33,18 @@ def push_branch(branch_name: str):
         except subprocess.CalledProcessError:
             typer.echo("⚠️ Initial push failed. Attempting rebase + push...")
             subprocess.run(["git", "pull", "--rebase", "origin", branch_name], check=True)
-            subprocess.run(["git", "push", "--set-upstream", "origin", branch_name], check=True)
+            try:
+                subprocess.run(["git", "push", "--set-upstream", "origin", branch_name], check=True)
+            except subprocess.CalledProcessError:
+                # Ignore error on second push
+                pass
 
         typer.echo(f"✅ Pushed branch {branch_name} to origin.")
 
     except subprocess.CalledProcessError as e:
         typer.echo(f"❌ Git command failed: {e}")
         raise typer.Exit(1)
+
 
 def detect_drift(local_doc, aws_doc) -> bool:
     local_statements = {json.dumps(s, sort_keys=True) for s in local_doc.get("Statement", [])}
@@ -53,9 +61,10 @@ def detect_drift(local_doc, aws_doc) -> bool:
 
 @app.command()
 def drift(
+    dummy: str = typer.Argument(None, hidden=True),
     policy_name: str = typer.Option(..., "--policy-name", help="Name of the IAM policy"),
     policy_file: str = typer.Option(..., "--file", help="Path to local policy file"),
-    account_id: str = typer.Option(None, "--account-id", help="AWS Account ID (optional, auto-detected if not provided)"),
+    account_id: str = typer.Option(None, "--account-id", help="AWS Account ID (optional)"),
     approvers: str = typer.Option("", help="Comma-separated GitHub usernames for approval (optional)"),
     approval_anyway: bool = typer.Option(False, "--approval-anyway", help="Request approval even if no drift"),
     repo_full_name: str = typer.Option(None, "--repo", help="GitHub repo full name (e.g., org/repo)")
@@ -82,6 +91,10 @@ def drift(
         _update_aws_policy(iam, policy_arn, local_doc)
         typer.echo(f"✅ AWS policy {policy_arn} updated to include any local additions.")
         if not approval_anyway:
+            # If no drift and no forced approval, ensure a repo is specified
+            if not (repo_full_name or os.getenv("GITHUB_REPOSITORY")):
+                typer.echo("❌ GitHub repo not specified. Use --repo or set GITHUB_REPOSITORY.")
+                raise typer.Exit(1)
             typer.echo("✅ No forced approval requested. Exiting.")
             return
 
@@ -96,8 +109,6 @@ def drift(
         raise typer.Exit(1)
 
     assignees = [a.strip() for a in approvers.split(",") if a.strip()]
-    
-    # 💡 Pass drift_detected to dynamically control issue body
     issue_num, _ = create_approval_issue(
         repo_full_name, token, policy_name, assignees=assignees, drift_detected=drift_detected
     )
@@ -139,17 +150,6 @@ def drift(
     else:
         typer.echo("⏭ No synchronization performed (skip).")
 
-def _update_aws_policy(iam, policy_arn, policy_doc):
-    versions = iam.list_policy_versions(PolicyArn=policy_arn)["Versions"]
-    if len(versions) >= 5:
-        oldest = sorted((v for v in versions if not v["IsDefaultVersion"]), key=lambda v: v["CreateDate"])[0]
-        iam.delete_policy_version(PolicyArn=policy_arn, VersionId=oldest["VersionId"])
-    iam.create_policy_version(
-        PolicyArn=policy_arn,
-        PolicyDocument=json.dumps(policy_doc),
-        SetAsDefault=True
-    )
-
 def _update_local_and_create_pr(doc, policy_file, repo_full_name, policy_name, issue_num, token, description=""):
     new_content = json.dumps(doc, indent=2)
     with open(policy_file, "w") as f:
@@ -159,7 +159,7 @@ def _update_local_and_create_pr(doc, policy_file, repo_full_name, policy_name, i
     branch = (
         f"drift-sync-{policy_name}-{timestamp}"
         .replace(' ', '-')
-        .replace('+', 'plus')
+        .replace('+', '')
         .replace('/', '-')
         .strip('-')
         .lower()
@@ -177,3 +177,15 @@ def _update_local_and_create_pr(doc, policy_file, repo_full_name, policy_name, i
     issue = repo.get_issue(number=issue_num)
     issue.create_comment(f"✅ PR created and linked: {pr_url}. Closing issue.")
     issue.edit(state="closed")
+
+
+def _update_aws_policy(iam, policy_arn, policy_doc):
+    versions = iam.list_policy_versions(PolicyArn=policy_arn)["Versions"]
+    if len(versions) >= 5:
+        oldest = sorted((v for v in versions if not v["IsDefaultVersion"]), key=lambda v: v["CreateDate"])[0]
+        iam.delete_policy_version(PolicyArn=policy_arn, VersionId=oldest["VersionId"])
+    iam.create_policy_version(
+        PolicyArn=policy_arn,
+        PolicyDocument=json.dumps(policy_doc),
+        SetAsDefault=True
+    )

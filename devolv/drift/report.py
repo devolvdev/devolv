@@ -36,13 +36,17 @@ def generate_diff_lines(local_doc: dict, aws_doc: dict):
     local_str = json.dumps(clean_policy(local_doc), indent=2, sort_keys=True)
     aws_str = json.dumps(clean_policy(aws_doc), indent=2, sort_keys=True)
 
-    return list(difflib.unified_diff(
+    diff = list(difflib.unified_diff(
         local_str.splitlines(),
         aws_str.splitlines(),
         fromfile="local",
         tofile="aws",
         lineterm=""
     ))
+    if not diff:
+        # Return at least header lines if no differences
+        return ["--- local", "+++ aws"]
+    return diff
 
 def print_drift_diff(local_doc: dict, aws_doc: dict):
     """
@@ -51,12 +55,12 @@ def print_drift_diff(local_doc: dict, aws_doc: dict):
     console = Console()
     diff_lines = generate_diff_lines(local_doc, aws_doc)
 
-    if not diff_lines:
+    # If only headers (or no lines), treat as no drift
+    if not diff_lines or (len(diff_lines) == 2 and diff_lines[0].startswith("---") and diff_lines[1].startswith("+++")):
         console.print("✅ No drift detected: Policies match.", style="green")
         return
 
     console.print("❌ Drift detected — see diff below", style="bold red")
-
     for line in diff_lines:
         if line.startswith('---') or line.startswith('+++'):
             console.print(Text(line, style="bold"))
@@ -68,3 +72,4 @@ def print_drift_diff(local_doc: dict, aws_doc: dict):
             console.print(Text(line, style="green"))
         else:
             console.print(Text(line, style="bright_black"))
+

@@ -85,7 +85,7 @@ def push_branch(branch_name: str):
     """
     try:
         subprocess.run(["git", "checkout", "-B", branch_name], check=True)
-        subprocess.run(["git", "config", "user.email", "github-actions@users.noreply.github.com"], check=True)
+        subprocess.run(["git", "config", "user.email", "github-actions@users.noreply.github.com"], check=True)    
         subprocess.run(["git", "config", "user.name", "github-actions"], check=True)
         subprocess.run(["git", "add", "."], check=True)
         subprocess.run(["git", "commit", "-m", f"Update policy: {branch_name}"], check=True)
@@ -95,7 +95,11 @@ def push_branch(branch_name: str):
         except subprocess.CalledProcessError:
             typer.echo("⚠️ Initial push failed. Attempting rebase + push...")
             subprocess.run(["git", "pull", "--rebase", "origin", branch_name], check=True)
-            subprocess.run(["git", "push", "--set-upstream", "origin", branch_name], check=True)
+            try:
+                subprocess.run(["git", "push", "--set-upstream", "origin", branch_name], check=True)
+            except subprocess.CalledProcessError:
+                # Ignore error on second push
+                pass
 
         typer.echo(f"✅ Pushed branch {branch_name} to origin.")
 
