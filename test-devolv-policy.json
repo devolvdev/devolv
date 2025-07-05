@@ -1,131 +1,137 @@
 {
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Sid": "S3List",
-            "Effect": "Allow",
-            "Action": "s3:ListBucket",
-            "Resource": "arn:aws:s3:::example-bucket"
-        },
-        {
-            "Sid": "S3GetObj",
-            "Effect": "Allow",
-            "Action": "s3:GetObject",
-            "Resource": "arn:aws:s3:::example-bucket/*"
-        },
-        {
-            "Sid": "EC2Describe",
-            "Effect": "Allow",
-            "Action": "ec2:DescribeInstances",
-            "Resource": "*"
-        },
-        {
-            "Sid": "EC2Start",
-            "Effect": "Allow",
-            "Action": "ec2:StartInstances",
-            "Resource": "arn:aws:ec2:us-east-1:123456789012:instance/*"
-        },
-        {
-            "Sid": "EC2Stop",
-            "Effect": "Allow",
-            "Action": "ec2:StopInstances",
-            "Resource": "arn:aws:ec2:us-east-1:123456789012:instance/*"
-        },
-        {
-            "Sid": "DynamoGet",
-            "Effect": "Allow",
-            "Action": "dynamodb:GetItem",
-            "Resource": "arn:aws:dynamodb:us-east-1:123456789012:table/ExampleTable"
-        },
-        {
-            "Sid": "DynamoPut",
-            "Effect": "Allow",
-            "Action": "dynamodb:PutItem",
-            "Resource": "arn:aws:dynamodb:us-east-1:123456789012:table/ExampleTable"
-        },
-        {
-            "Sid": "CloudWatchPut",
-            "Effect": "Allow",
-            "Action": "cloudwatch:PutMetricData",
-            "Resource": "*"
-        },
-        {
-            "Sid": "LogsCreateGroup",
-            "Effect": "Allow",
-            "Action": "logs:CreateLogGroup",
-            "Resource": "*"
-        },
-        {
-            "Sid": "LogsCreateStream",
-            "Effect": "Allow",
-            "Action": "logs:CreateLogStream",
-            "Resource": "*"
-        },
-        {
-            "Sid": "LogsPutEvents",
-            "Effect": "Allow",
-            "Action": "logs:PutLogEvents",
-            "Resource": "arn:aws:logs:us-east-1:123456789012:log-group:/aws/lambda/example"
-        },
-        {
-            "Sid": "SQSReceive",
-            "Effect": "Allow",
-            "Action": "sqs:ReceiveMessage",
-            "Resource": "arn:aws:sqs:us-east-1:123456789012:ExampleQueue"
-        },
-        {
-            "Sid": "SQSSend",
-            "Effect": "Allow",
-            "Action": "sqs:SendMessage",
-            "Resource": "arn:aws:sqs:us-east-1:123456789012:ExampleQueue"
-        },
-        {
-            "Sid": "SNSPublish",
-            "Effect": "Allow",
-            "Action": "sns:Publish",
-            "Resource": "arn:aws:sns:us-east-1:123456789012:ExampleTopic"
-        },
-        {
-            "Sid": "FakeServiceAccess1",
-            "Effect": "Allow",
-            "Action": "fakeservice:DoSomething",
-            "Resource": "arn:aws:fakeservice:us-east-1:123456789012:fake-resource/123"
-        },
-        {
-            "Sid": "FakeServiceAccess2",
-            "Effect": "Allow",
-            "Action": "fakeservice:DoSomethingElse",
-            "Resource": "arn:aws:fakeservice:us-east-1:123456789012:fake-resource/456"
-        },
-        {
-            "Sid": "LambdaInvoke",
-            "Effect": "Allow",
-            "Action": "lambda:InvokeFunction",
-            "Resource": "arn:aws:lambda:us-east-1:123456789012:function:ExampleFunction"
-        },
-        {
-            "Sid": "ECSList",
-            "Effect": "Allow",
-            "Action": "ecs:ListClusters",
-            "Resource": "*"
-        },
-        {
-            "Sid": "ECSDescribe",
-            "Effect": "Allow",
-            "Action": "ecs:DescribeTasks",
-            "Resource": "*"
-        },
-        {
-            "Sid": "SSMGetParam",
-            "Effect": "Allow",
-            "Action": "ssm:GetParameter",
-            "Resource": "arn:aws:ssm:us-east-1:123456789012:parameter/ExampleParam"
-        },
-        {
-            "Sid": "SecretsGet",
-            "Effect": "Allow",
-            "Action": "secretsmanager:GetSecretValue",
-            "Resource": "arn:aws:secretsmanager:us-east-1:123456789012:secret:ExampleSecret"
-        }
-    ]
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "S3List",
+      "Effect": "Allow",
+      "Action": "s3:ListBucket",
+      "Resource": "arn:aws:s3:::example-bucket"
+    },
+    {
+      "Sid": "S3GetObj",
+      "Effect": "Allow",
+      "Action": "s3:GetObject",
+      "Resource": "arn:aws:s3:::example-bucket/*"
+    },
+    {
+      "Sid": "EC2Describe",
+      "Effect": "Allow",
+      "Action": "ec2:DescribeInstances",
+      "Resource": "*"
+    },
+    {
+      "Sid": "EC2Start",
+      "Effect": "Allow",
+      "Action": "ec2:StartInstances",
+      "Resource": "arn:aws:ec2:us-east-1:123456789012:instance/*"
+    },
+    {
+      "Sid": "EC2Stop",
+      "Effect": "Allow",
+      "Action": "ec2:StopInstances",
+      "Resource": "arn:aws:ec2:us-east-1:123456789012:instance/*"
+    },
+    {
+      "Sid": "DynamoGet",
+      "Effect": "Allow",
+      "Action": "dynamodb:GetItem",
+      "Resource": "arn:aws:dynamodb:us-east-1:123456789012:table/ExampleTable"
+    },
+    {
+      "Sid": "DynamoPut",
+      "Effect": "Allow",
+      "Action": "dynamodb:PutItem",
+      "Resource": "arn:aws:dynamodb:us-east-1:123456789012:table/ExampleTable"
+    },
+    {
+      "Sid": "CloudWatchPut",
+      "Effect": "Allow",
+      "Action": "cloudwatch:PutMetricData",
+      "Resource": "*"
+    },
+    {
+      "Sid": "LogsCreateGroup",
+      "Effect": "Allow",
+      "Action": "logs:CreateLogGroup",
+      "Resource": "*"
+    },
+    {
+      "Sid": "LogsCreateStream",
+      "Effect": "Allow",
+      "Action": "logs:CreateLogStream",
+      "Resource": "*"
+    },
+    {
+      "Sid": "LogsPutEvents",
+      "Effect": "Allow",
+      "Action": "logs:PutLogEvents",
+      "Resource": "arn:aws:logs:us-east-1:123456789012:log-group:/aws/lambda/example"
+    },
+    {
+      "Sid": "SQSReceive",
+      "Effect": "Allow",
+      "Action": "sqs:ReceiveMessage",
+      "Resource": "arn:aws:sqs:us-east-1:123456789012:ExampleQueue"
+    },
+    {
+      "Sid": "SQSSend",
+      "Effect": "Allow",
+      "Action": "sqs:SendMessage",
+      "Resource": "arn:aws:sqs:us-east-1:123456789012:ExampleQueue"
+    },
+    {
+      "Sid": "SNSPublish",
+      "Effect": "Allow",
+      "Action": "sns:Publish",
+      "Resource": "arn:aws:sns:us-east-1:123456789012:ExampleTopic"
+    },
+    {
+      "Sid": "FakeServiceAccess1",
+      "Effect": "Allow",
+      "Action": "fakeservice:DoSomething",
+      "Resource": "arn:aws:fakeservice:us-east-1:123456789012:fake-resource/123"
+    },
+    {
+      "Sid": "FakeServiceAccess2",
+      "Effect": "Allow",
+      "Action": "fakeservice:DoSomethingElse",
+      "Resource": "arn:aws:fakeservice:us-east-1:123456789012:fake-resource/456"
+    },
+    {
+      "Sid": "LambdaInvoke",
+      "Effect": "Allow",
+      "Action": "lambda:InvokeFunction",
+      "Resource": "arn:aws:lambda:us-east-1:123456789012:function:ExampleFunction"
+    },
+    {
+      "Sid": "ECSList",
+      "Effect": "Allow",
+      "Action": "ecs:ListClusters",
+      "Resource": "*"
+    },
+    {
+      "Sid": "ECSDescribe",
+      "Effect": "Allow",
+      "Action": "ecs:DescribeTasks",
+      "Resource": "*"
+    },
+    {
+      "Sid": "SSMGetParam",
+      "Effect": "Allow",
+      "Action": "ssm:GetParameter",
+      "Resource": "arn:aws:ssm:us-east-1:123456789012:parameter/ExampleParam"
+    },
+    {
+      "Sid": "SecretsGet",
+      "Effect": "Allow",
+      "Action": "secretsmanager:GetSecretValue",
+      "Resource": "arn:aws:secretsmanager:us-east-1:123456789012:secret:ExampleSecret"
+    },
+    {
+      "Sid": "SSSSMGetParam",
+      "Effect": "Allow",
+      "Action": "ssm:GetParameter",
+      "Resource": "arn:aws:ssm:us-east-1:123456789012:parameter/ExampleParam"
+    }
+  ]
 }
