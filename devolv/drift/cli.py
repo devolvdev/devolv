@@ -4,6 +4,7 @@ import subprocess
 import boto3
 import typer
 from github import Github
+from datetime import datetime
 
 from devolv.drift.aws_fetcher import (
     get_aws_policy_document,
@@ -46,9 +47,12 @@ def detect_drift(local_doc, aws_doc) -> bool:
 
     if missing_in_local:
         typer.echo("❌ Drift detected: Local is missing permissions present in AWS.")
-        for stmt in missing_in_local:
-            typer.echo(stmt)
+        # No need to print each JSON line — rich diff will handle details
         return True
+
+    typer.echo("✅ No removal drift detected (local may have extra permissions; that's fine).")
+    return False
+
 
     typer.echo("✅ No removal drift detected (local may have extra permissions; that's fine).")
     return False
@@ -137,9 +141,13 @@ def _update_local_and_create_pr(doc, policy_file, repo_full_name, policy_name, i
     with open(policy_file, "w") as f:
         f.write(new_content)
 
+    timestamp = datetime.utcnow().strftime("%Y%m%d-%H%M%S")
     branch = (
-        f"{description.replace(' ', '-').replace('+', 'plus').replace('/', '-')}-policy-{policy_name}"
-        .strip("-")
+        f"drift-sync-{policy_name}-{timestamp}"
+        .replace(' ', '-')
+        .replace('+', 'plus')
+        .replace('/', '-')
+        .strip('-')
         .lower()
     )
 

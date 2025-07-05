@@ -2,7 +2,7 @@ import json
 import difflib
 from rich.console import Console
 from rich.text import Text
-
+import typer
 def clean_policy(policy):
     """
     Remove empty statements ({} entries) from the policy's 'Statement' list.
@@ -13,21 +13,21 @@ def clean_policy(policy):
             policy["Statement"] = [s for s in statements if s]
     return policy
 
-def detect_drift(local_doc: dict, aws_doc: dict) -> bool:
-    """
-    Detect if the local policy would remove permissions from the AWS policy.
-    Returns True if drift is detected, False otherwise.
-    """
-    local_doc = clean_policy(local_doc)
-    aws_doc = clean_policy(aws_doc)
+def detect_drift(local_doc, aws_doc) -> bool:
+    """Detect removal drift: AWS has permissions missing from local (danger)."""
+    local_statements = {json.dumps(s, sort_keys=True) for s in local_doc.get("Statement", [])}
+    aws_statements = {json.dumps(s, sort_keys=True) for s in aws_doc.get("Statement", [])}
 
-    local_statements = local_doc.get("Statement", [])
-    aws_statements = aws_doc.get("Statement", [])
+    missing_in_local = aws_statements - local_statements
 
-    # Check if any AWS statement is missing in local (i.e., local would remove something)
-    missing_in_local = [stmt for stmt in aws_statements if stmt not in local_statements]
+    if missing_in_local:
+        typer.echo("❌ Drift detected: Local is missing permissions present in AWS.")
+        # No need to print each JSON line — rich diff will handle details
+        return True
 
-    return bool(missing_in_local)
+    typer.echo("✅ No removal drift detected (local may have extra permissions; that's fine).")
+    return False
+
 
 def generate_diff_lines(local_doc: dict, aws_doc: dict):
     """
