@@ -26,7 +26,7 @@ def wait_for_sync_choice(repo_full_name, issue_number, token):
         comments = issue.get_comments()
         for comment in comments:
             content = comment.body.strip().lower()
-            if content in ["local->aws", "aws->local", "aws<->local" "skip"]:
+            if content in ["local->aws", "aws->local", "aws<->local", "skip"]:
                 return content
         print("Waiting for approval comment...")
         time.sleep(30)  # Poll every 30 seconds

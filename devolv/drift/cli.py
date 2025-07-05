@@ -8,6 +8,7 @@ from devolv.drift.aws_fetcher import get_aws_policy_document, merge_policy_docum
 from devolv.drift.issues import create_approval_issue, wait_for_sync_choice
 from devolv.drift.github_approvals import create_github_pr
 from devolv.drift.report import detect_and_print_drift
+from github import Github  # Needed for auto-close
 
 app = typer.Typer()
 
@@ -74,13 +75,13 @@ def drift(
         typer.echo(f"✅ AWS policy {policy_arn} updated with local changes (append-only).")
 
     elif choice == "aws->local":
-        _update_local_and_create_pr(aws_doc, policy_file, repo_full_name, policy_name, issue_num, description="from AWS policy")
+        _update_local_and_create_pr(aws_doc, policy_file, repo_full_name, policy_name, issue_num, token, "from AWS policy")
 
     elif choice == "aws<->local":
         superset_doc = build_superset_policy(local_doc, aws_doc)
         _update_aws_policy(iam, policy_arn, superset_doc)
         typer.echo(f"✅ AWS policy {policy_arn} updated with superset of local + AWS.")
-        _update_local_and_create_pr(superset_doc, policy_file, repo_full_name, policy_name, issue_num, description="with superset of local + AWS")
+        _update_local_and_create_pr(superset_doc, policy_file, repo_full_name, policy_name, issue_num, token, "with superset of local + AWS")
 
     else:
         typer.echo("⏭ No synchronization performed (skip).")
@@ -96,12 +97,16 @@ def _update_aws_policy(iam, policy_arn, policy_doc):
         SetAsDefault=True
     )
 
-def _update_local_and_create_pr(doc, policy_file, repo_full_name, policy_name, issue_num, description=""):
+def _update_local_and_create_pr(doc, policy_file, repo_full_name, policy_name, issue_num, token, description=""):
     new_content = json.dumps(doc, indent=2)
     with open(policy_file, "w") as f:
         f.write(new_content)
 
-    branch = f"{description.replace(' ', '-')}-policy-{policy_name}".strip("-")
+    branch = (
+        f"{description.replace(' ', '-').replace('+', 'plus').replace('/', '-')}-policy-{policy_name}"
+        .strip("-")
+        .lower()
+    )
     push_branch(branch)
 
     pr_title = f"Update {policy_file} {description}".strip()
@@ -109,3 +114,10 @@ def _update_local_and_create_pr(doc, policy_file, repo_full_name, policy_name, i
     pr_num, pr_url = create_github_pr(repo_full_name, branch, pr_title, pr_body, issue_num=issue_num)
 
     typer.echo(f"✅ Created PR #{pr_num}: {pr_url}")
+
+    # Auto-close issue
+    gh = Github(token)
+    repo = gh.get_repo(repo_full_name)
+    issue = repo.get_issue(number=issue_num)
+    issue.create_comment(f"✅ PR created and linked: {pr_url}. Closing issue.")
+    issue.edit(state="closed")
