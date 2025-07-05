@@ -13,80 +13,58 @@ def clean_policy(policy):
             policy["Statement"] = [s for s in statements if s]
     return policy
 
-def detect_and_print_drift(local_doc: dict, aws_doc: dict) -> bool:
+def detect_drift(local_doc: dict, aws_doc: dict) -> bool:
     """
-    Compare local and AWS policy documents.
-    Print a rich diff if drift is detected.
-    Return True if drift is detected, False otherwise.
+    Detect if the local policy would remove permissions from the AWS policy.
+    Returns True if drift is detected, False otherwise.
     """
-    console = Console()
-
-    # Clean
     local_doc = clean_policy(local_doc)
     aws_doc = clean_policy(aws_doc)
 
-    # Dump sorted JSON
-    local_str = json.dumps(local_doc, indent=2, sort_keys=True)
-    aws_str = json.dumps(aws_doc, indent=2, sort_keys=True)
+    local_statements = local_doc.get("Statement", [])
+    aws_statements = aws_doc.get("Statement", [])
 
-    # Diff lines
-    local_lines = local_str.splitlines()
-    aws_lines = aws_str.splitlines()
+    # Check if any AWS statement is missing in local (i.e., local would remove something)
+    missing_in_local = [stmt for stmt in aws_statements if stmt not in local_statements]
 
-    diff_lines = list(difflib.unified_diff(
-        local_lines,
-        aws_lines,
+    return bool(missing_in_local)
+
+def generate_diff_lines(local_doc: dict, aws_doc: dict):
+    """
+    Generate a unified diff between local and AWS policy JSONs.
+    """
+    local_str = json.dumps(clean_policy(local_doc), indent=2, sort_keys=True)
+    aws_str = json.dumps(clean_policy(aws_doc), indent=2, sort_keys=True)
+
+    return list(difflib.unified_diff(
+        local_str.splitlines(),
+        aws_str.splitlines(),
         fromfile="local",
         tofile="aws",
         lineterm=""
     ))
 
+def print_drift_diff(local_doc: dict, aws_doc: dict):
+    """
+    Pretty-print a unified diff using Rich.
+    """
+    console = Console()
+    diff_lines = generate_diff_lines(local_doc, aws_doc)
+
     if not diff_lines:
         console.print("✅ No drift detected: Policies match.", style="green")
-        return False
+        return
 
     console.print("❌ Drift detected — see diff below", style="bold red")
-    i = 0
-    while i < len(diff_lines):
-        line = diff_lines[i]
 
+    for line in diff_lines:
         if line.startswith('---') or line.startswith('+++'):
             console.print(Text(line, style="bold"))
         elif line.startswith('@@'):
             console.print(Text(line, style="cyan"))
         elif line.startswith('-'):
-            if (i + 1 < len(diff_lines)) and diff_lines[i + 1].startswith('+'):
-                next_line = diff_lines[i + 1]
-                old_content = line[1:].rstrip('\n')
-                new_content = next_line[1:].rstrip('\n')
-
-                matcher = difflib.SequenceMatcher(None, old_content, new_content)
-                old_text = Text("-", style="red")
-                new_text = Text("+", style="green")
-
-                for tag, i1, i2, j1, j2 in matcher.get_opcodes():
-                    if tag == 'equal':
-                        old_text.append(old_content[i1:i2], style="red")
-                        new_text.append(new_content[j1:j2], style="green")
-                    elif tag == 'replace':
-                        old_text.append(old_content[i1:i2], style="bold white on red")
-                        new_text.append(new_content[j1:j2], style="bold black on green")
-                    elif tag == 'delete':
-                        old_text.append(old_content[i1:i2], style="bold white on red")
-                    elif tag == 'insert':
-                        new_text.append(new_content[j1:j2], style="bold black on green")
-
-                console.print(old_text)
-                console.print(new_text)
-                i += 1
-            else:
-                console.print(Text(line, style="red"))
+            console.print(Text(line, style="red"))
         elif line.startswith('+'):
             console.print(Text(line, style="green"))
-        elif line.startswith(' '):
-            console.print(Text(line, style="bright_black"))
         else:
-            console.print(Text(line))
-        i += 1
-
-    return True
+            console.print(Text(line, style="bright_black"))

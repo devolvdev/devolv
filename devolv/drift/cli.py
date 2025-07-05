@@ -1,34 +1,24 @@
 import json
-import boto3
-import typer
 import os
 import subprocess
+import boto3
+import typer
+from github import Github
 
 from devolv.drift.aws_fetcher import get_aws_policy_document, merge_policy_documents, build_superset_policy
 from devolv.drift.issues import create_approval_issue, wait_for_sync_choice
 from devolv.drift.github_approvals import create_github_pr
-from devolv.drift.report import detect_and_print_drift
-from github import Github  # Needed for auto-close
 
 app = typer.Typer()
 
 def push_branch(branch_name: str):
-    import subprocess
-    import typer
-
     try:
-        # Create or switch to branch safely
         subprocess.run(["git", "checkout", "-B", branch_name], check=True)
-
-        # Ensure Git identity is set
         subprocess.run(["git", "config", "user.email", "github-actions@users.noreply.github.com"], check=True)
         subprocess.run(["git", "config", "user.name", "github-actions"], check=True)
-
-        # Add, commit
         subprocess.run(["git", "add", "."], check=True)
         subprocess.run(["git", "commit", "-m", f"Update policy: {branch_name}"], check=True)
 
-        # Try pushing
         try:
             subprocess.run(["git", "push", "--set-upstream", "origin", branch_name], check=True)
         except subprocess.CalledProcessError:
@@ -41,6 +31,22 @@ def push_branch(branch_name: str):
     except subprocess.CalledProcessError as e:
         typer.echo(f"❌ Git command failed: {e}")
         raise typer.Exit(1)
+
+def detect_drift(local_doc, aws_doc) -> bool:
+    """Detect if AWS permissions exist that are missing in local (removal drift)."""
+    local_statements = {json.dumps(stmt, sort_keys=True) for stmt in local_doc.get("Statement", [])}
+    aws_statements = {json.dumps(stmt, sort_keys=True) for stmt in aws_doc.get("Statement", [])}
+
+    missing_in_local = aws_statements - local_statements
+
+    if missing_in_local:
+        typer.echo("❌ Drift detected: Your local policy is missing some permissions present in AWS.")
+        for stmt in missing_in_local:
+            typer.echo(stmt)
+        return True
+
+    typer.echo("✅ No drift detected (local may have extra permissions; that's fine).")
+    return False
 
 @app.command()
 def drift(
@@ -63,25 +69,25 @@ def drift(
         raise typer.Exit(1)
 
     aws_doc = get_aws_policy_document(policy_arn)
-    drift = detect_and_print_drift(local_doc, aws_doc)
 
-    if not drift and not approval_anyway:
-        typer.echo("✅ No drift detected. Use --approval-anyway to force approval.")
+    drift_detected = detect_drift(local_doc, aws_doc)
+
+    if not drift_detected and not approval_anyway:
+        typer.echo("✅ No drift and no forced approval requested.")
         raise typer.Exit()
 
     repo_full_name = repo_full_name or os.getenv("GITHUB_REPOSITORY")
+    token = os.getenv("GITHUB_TOKEN")
+
     if not repo_full_name:
         typer.echo("❌ GitHub repo not specified. Use --repo or set GITHUB_REPOSITORY.")
         raise typer.Exit(1)
-
-    token = os.getenv("GITHUB_TOKEN")
     if not token:
         typer.echo("❌ GITHUB_TOKEN not set in environment.")
         raise typer.Exit(1)
 
     assignees = [a.strip() for a in approvers.split(",") if a.strip()]
     issue_num, _ = create_approval_issue(repo_full_name, token, policy_name, assignees=assignees)
-    typer.echo(f"✅ Created issue #{issue_num} in {repo_full_name}: https://github.com/{repo_full_name}/issues/{issue_num}")
 
     choice = wait_for_sync_choice(repo_full_name, issue_num, token)
     iam = boto3.client("iam")
@@ -115,15 +121,10 @@ def _update_aws_policy(iam, policy_arn, policy_doc):
     )
 
 def _update_local_and_create_pr(doc, policy_file, repo_full_name, policy_name, issue_num, token, description=""):
-    import json
-    from github import Github
-    from devolv.drift.github_approvals import create_github_pr
-
     new_content = json.dumps(doc, indent=2)
     with open(policy_file, "w") as f:
         f.write(new_content)
 
-    # Clean branch name
     branch = (
         f"{description.replace(' ', '-').replace('+', 'plus').replace('/', '-')}-policy-{policy_name}"
         .strip("-")
@@ -135,16 +136,10 @@ def _update_local_and_create_pr(doc, policy_file, repo_full_name, policy_name, i
     pr_title = f"Update {policy_file} {description}".strip()
     pr_body = f"This PR updates `{policy_file}` {description}.\n\nLinked to issue #{issue_num}.".strip()
 
-    # ✅ Pass correct branch name
     pr_num, pr_url = create_github_pr(repo_full_name, branch, pr_title, pr_body, issue_num=issue_num)
 
-    #typer.echo(f"✅ Created PR #{pr_num}: {pr_url}")
-
-    # ✅ Auto-close issue immediately
     gh = Github(token)
     repo = gh.get_repo(repo_full_name)
     issue = repo.get_issue(number=issue_num)
     issue.create_comment(f"✅ PR created and linked: {pr_url}. Closing issue.")
     issue.edit(state="closed")
-
-
