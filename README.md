@@ -19,7 +19,7 @@
 | Command                | Description                                 |
 |------------------------|---------------------------------------------|
 | `devolv validate`      | Validate AWS IAM policies (✅ live)         |
-| `devolv drift`         | Detect IAM policy drift (✅ live)           |
+| `devolv drift`         | Detect IAM policy drift (✅ live, CI/CD-first) |
 | `devolv scan`          | 🔜 Scan AWS accounts (coming soon)          |
 | `devolv generate`      | 🧠 Generate safe IAM policies (coming soon) |
 | `devolv etl`           | ⚙️ CI/CD IAM transformation (planned)       |
@@ -42,11 +42,11 @@ devolv validate path/to/policy.json
 ```
 > Outputs security warnings if wildcards or risks are found.
 
-### Detect IAM Drift
+### Detect IAM Drift (CI/CD-first tool)
 ```bash
 devolv drift --policy-name my-policy --file ./policy.json
 ```
-> Shows differences between your local policy file and the deployed AWS policy.
+> Designed for GitHub Actions / CI workflows: shows differences between your local policy file and the deployed AWS policy, creates PRs or issues to resolve drift.
 
 ---
 

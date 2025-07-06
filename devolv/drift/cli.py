@@ -108,13 +108,12 @@ def drift(
                 raise typer.Exit(1)
         else:
             _update_aws_policy(iam, policy_arn, local_doc)
-            typer.echo(f"✅ AWS policy {policy_arn} updated to include any local additions.")
             typer.echo("✅ No forced approval requested. Exiting.")
 
 def _handle_choice(choice, local_doc, aws_doc, iam, policy_arn, repo, token, policy_file, policy_name, issue_num):
     if choice == "local->aws":
         merged_doc = merge_policy_documents(local_doc, aws_doc)
-        _apply_aws_update_and_close(iam, policy_arn, merged_doc, repo, token, issue_num, "✅ AWS updated with local changes.")
+        _apply_aws_update_and_close(iam, policy_arn, merged_doc, repo, token, issue_num, "✅ AWS updated with local changes.",True)
     elif choice == "aws->local":
         _update_local_and_create_pr(aws_doc, policy_file, repo, policy_name, issue_num, token, "from AWS policy")
     elif choice == "aws<->local":
@@ -125,29 +124,37 @@ def _handle_choice(choice, local_doc, aws_doc, iam, policy_arn, repo, token, pol
         typer.echo("⏭ No synchronization performed (skip).")
         close_issue(repo, token, issue_num, "⏭ No sync chosen. Closing issue.")
 
-def _apply_aws_update_and_close(iam, policy_arn, doc, repo, token, issue_num, message):
-    _update_aws_policy(iam, policy_arn, doc)
+def _apply_aws_update_and_close(iam, policy_arn, doc, repo, token, issue_num, message, force=False):
+    _update_aws_policy(iam, policy_arn, doc,force=force)
     close_issue(repo, token, issue_num, message)
 
-def _update_aws_policy(iam, policy_arn, policy_doc):
+def _update_aws_policy(iam, policy_arn, policy_doc, force=False):
     sids = [stmt.get("Sid") for stmt in policy_doc.get("Statement", []) if "Sid" in stmt]
     if len(sids) != len(set(sids)):
         raise ValueError("❌ Merged policy would produce duplicate SIDs. Cannot update AWS policy.")
+
     current_version_id = iam.get_policy(PolicyArn=policy_arn)["Policy"]["DefaultVersionId"]
     current_doc = iam.get_policy_version(PolicyArn=policy_arn, VersionId=current_version_id)["PolicyVersion"]["Document"]
-    if policy_doc == current_doc:
+
+    if not force and policy_doc == current_doc:
         print("✅ Merged policy is identical to existing AWS policy. No update needed.")
         return
+
     versions = iam.list_policy_versions(PolicyArn=policy_arn)["Versions"]
     if len(versions) >= 5:
-        oldest = sorted((v for v in versions if not v["IsDefaultVersion"]), key=lambda v: v["CreateDate"])[0]
+        oldest = sorted(
+            (v for v in versions if not v["IsDefaultVersion"]),
+            key=lambda v: v["CreateDate"]
+        )[0]
         iam.delete_policy_version(PolicyArn=policy_arn, VersionId=oldest["VersionId"])
+
     iam.create_policy_version(
         PolicyArn=policy_arn,
         PolicyDocument=json.dumps(policy_doc),
         SetAsDefault=True
     )
     print(f"✅ AWS policy {policy_arn} updated successfully.")
+
 
 def _update_local_and_create_pr(doc, policy_file, repo_full_name, policy_name, issue_num, token, description=""):
     with open(policy_file, "w") as f:

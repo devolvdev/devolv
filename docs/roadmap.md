@@ -1,15 +1,14 @@
 
 # 📍 Devolv Roadmap
 
-Devolv is a modular DevOps CLI being released in public, one tool at a time.
+**Devolv is a modular DevOps security-first platform, built for CI/CD automation and scalable governance.** Each tool is released in public, one module at a time.
 
 ---
 
-## ✅ Live
+## ✅ Live (CI/CD-first tools)
 
-- `devolv validate file` → Validate a single IAM JSON/YAML file
-- `devolv validate folder` → Recursively validate IAM files in a directory
-- `devolv drift` → Detect IAM policy drift between local files and AWS
+- `devolv validate file` → Recursively validate IAM files in a directory
+- `devolv drift` → Detect IAM policy drift between local files and AWS (auto-PR creation supported)
 
 ---
 
@@ -23,11 +22,17 @@ Devolv is a modular DevOps CLI being released in public, one tool at a time.
 
 ## 🧪 Long Term Vision
 
-- 🤖 DevSecOps AI Agent: Auto-review IAM PRs and detect risky changes
-- 🔁 GitHub Bot: Inline comments on IAM policy diffs
-- 📊 SaaS Dashboard: Central governance, audit trails, and policy history
-- 🧠 Neural IAM Optimizer: Learn from past usage to suggest least privilege
+- 🤖 **DevSecOps AI Agent** → Auto-review IAM PRs and detect risky changes in CI/CD
+- 🔁 **GitHub Bot** → Inline comments on IAM policy diffs, enforce standards in PRs
+- 📊 **SaaS Dashboard** → Central governance, audit trails, policy history, and insights
+- 🧠 **Neural IAM Optimizer** → Learn from usage patterns and recommend least-privilege policies
 
 ---
 
-Stay updated via [@Devolv__](https://x.com/Devolv__) on X.
+## 📢 Stay Updated
+
+Follow our journey and updates:  
+➡ [@Devolv__](https://x.com/Devolv__) on X (Twitter)  
+➡ [Devolv GitHub](https://github.com/devolvdev)
+
+**Devolv: DevOps, done securely, at scale.**
