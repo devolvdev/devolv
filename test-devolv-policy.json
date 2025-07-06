@@ -14,12 +14,6 @@
       "Resource": "arn:aws:s3:::example-bucket/*"
     },
     {
-      "Sid": "EC2Describe",
-      "Effect": "Allow",
-      "Action": "ec2:DescribeInstances",
-      "Resource": "*"
-    },
-    {
       "Sid": "EC2Stop",
       "Effect": "Allow",
       "Action": "ec2:StopInstances",
