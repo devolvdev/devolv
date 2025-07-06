@@ -20,6 +20,12 @@
       "Resource": "arn:aws:ec2:us-east-1:123456789012:instance/*"
     },
     {
+      "Sid": "DynamoPut",
+      "Effect": "Allow",
+      "Action": "dynamodb:PutItem",
+      "Resource": "arn:aws:dynamodb:us-east-1:123456789012:table/ExampleTable"
+    },
+    {
       "Sid": "CloudWatchPut",
       "Effect": "Allow",
       "Action": "cloudwatch:PutMetricData",
