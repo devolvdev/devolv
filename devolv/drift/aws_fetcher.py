@@ -1,5 +1,6 @@
 import boto3
 import json
+from collections import defaultdict
 
 def get_aws_policy_document(policy_arn: str) -> dict:
     """
@@ -11,37 +12,56 @@ def get_aws_policy_document(policy_arn: str) -> dict:
     version = iam.get_policy_version(PolicyArn=policy_arn, VersionId=default_version)
     return version['PolicyVersion']['Document']
 
+def _combine_statements(docs):
+    combined = defaultdict(lambda: {"Sid": None, "Effect": None, "Action": None, "Resource": set()})
+
+    for doc in docs:
+        for stmt in doc.get("Statement", []):
+            key = (
+                stmt.get("Sid"),
+                stmt.get("Effect"),
+                json.dumps(stmt.get("Action"), sort_keys=True)
+            )
+
+            combined_stmt = combined[key]
+            combined_stmt["Sid"] = stmt.get("Sid")
+            combined_stmt["Effect"] = stmt.get("Effect")
+            combined_stmt["Action"] = stmt.get("Action")
+
+            resources = stmt.get("Resource")
+            if not isinstance(resources, list):
+                resources = [resources]
+            
+            combined_stmt["Resource"].update(resources)
+
+    result = []
+    for stmt in combined.values():
+        result.append({
+            "Sid": stmt["Sid"],
+            "Effect": stmt["Effect"],
+            "Action": stmt["Action"],
+            "Resource": sorted(stmt["Resource"])
+        })
+
+    return result
+
 def merge_policy_documents(local_doc: dict, aws_doc: dict) -> dict:
     """
-    Merge statements by appending any local-only statements to the AWS document.
-    This is an "append-only" merge (we do not delete existing AWS statements).
+    Merge local and AWS policy documents: append any local-only permissions while
+    merging resources under same Sid + Effect + Action where possible.
     """
-    aws_stmts = aws_doc.get("Statement", [])
-    local_stmts = local_doc.get("Statement", [])
-    merged = list(aws_stmts)  # copy existing AWS statements
-    for stmt in local_stmts:
-        if stmt not in aws_stmts:
-            merged.append(stmt)
-    aws_doc["Statement"] = merged
-    return aws_doc
+    merged_statements = _combine_statements([aws_doc, local_doc])
+    return {
+        "Version": "2012-10-17",
+        "Statement": merged_statements
+    }
 
 def build_superset_policy(local_doc: dict, aws_doc: dict) -> dict:
     """
-    Combine local and AWS policy documents into a superset without duplicate statements.
+    Build a superset of local + AWS policy, merging where possible.
     """
-    local_statements = local_doc.get("Statement", [])
-    aws_statements = aws_doc.get("Statement", [])
-
-    seen = set()
-    combined = []
-
-    for stmt in local_statements + aws_statements:
-        stmt_str = json.dumps(stmt, sort_keys=True)
-        if stmt_str not in seen:
-            seen.add(stmt_str)
-            combined.append(stmt)
-
+    merged_statements = _combine_statements([local_doc, aws_doc])
     return {
         "Version": "2012-10-17",
-        "Statement": combined
+        "Statement": merged_statements
     }
