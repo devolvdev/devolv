@@ -2,7 +2,7 @@ import json
 import difflib
 from rich.console import Console
 from rich.text import Text
-import typer
+
 def clean_policy(policy):
     """
     Remove empty statements ({} entries) from the policy's 'Statement' list.
@@ -13,28 +13,39 @@ def clean_policy(policy):
             policy["Statement"] = [s for s in statements if s]
     return policy
 
-def detect_drift(local_doc, aws_doc) -> bool:
-    """Detect removal drift: AWS has permissions missing from local (danger)."""
-    local_statements = {json.dumps(s, sort_keys=True) for s in local_doc.get("Statement", [])}
-    aws_statements = {json.dumps(s, sort_keys=True) for s in aws_doc.get("Statement", [])}
+def normalize_resource(resource):
+    """
+    Always return a sorted list for the resource field.
+    """
+    if isinstance(resource, str):
+        return [resource]
+    if isinstance(resource, list):
+        return sorted(resource)
+    return resource
 
-    missing_in_local = aws_statements - local_statements
+def normalize_statement(stmt):
+    """
+    Return a normalized statement where Resource is always a sorted list.
+    """
+    stmt = stmt.copy()
+    if "Resource" in stmt:
+        stmt["Resource"] = normalize_resource(stmt["Resource"])
+    return stmt
 
-    if missing_in_local:
-        typer.echo("❌ Drift detected: Local is missing permissions present in AWS.")
-        # No need to print each JSON line — rich diff will handle details
-        return True
-
-    typer.echo("✅ No removal drift detected (local may have extra permissions; that's fine).")
-    return False
-
+def normalize_policy(policy):
+    """
+    Clean and normalize an entire policy.
+    """
+    cleaned = clean_policy(policy)
+    cleaned["Statement"] = [normalize_statement(s) for s in cleaned.get("Statement", [])]
+    return cleaned
 
 def generate_diff_lines(local_doc: dict, aws_doc: dict):
     """
     Generate a unified diff between local and AWS policy JSONs.
     """
-    local_str = json.dumps(clean_policy(local_doc), indent=2, sort_keys=True)
-    aws_str = json.dumps(clean_policy(aws_doc), indent=2, sort_keys=True)
+    local_str = json.dumps(normalize_policy(local_doc), indent=2, sort_keys=True)
+    aws_str = json.dumps(normalize_policy(aws_doc), indent=2, sort_keys=True)
 
     return list(difflib.unified_diff(
         local_str.splitlines(),
